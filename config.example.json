@@ -2,10 +2,10 @@
   "gmail_address": "your.email@example.com",
   "gmail_app_password": "your_app_password",
   "sender_name": "Your Name",
-  "sender_intro": "I'm a student at MIT and serve on MCG.",
-  "email_subject": "Collaboration with MIT Consulting Group (MCG)",
+  "sender_intro": "I'm on the partnerships team and would love to connect.",
+  "email_subject": "Potential Collaboration",
   "availability": "Mon 2-4pm ET\nWed 10-11am ET",
-  "email_template": "Hi {first_name},\n\nI'm reaching out to you regarding a potential collaboration with MIT Consulting Group (MCG)!\n\nMy name is {sender_name}, and {sender_intro}, {personalized_sentence}\n\nMCG is MIT's oldest undergraduate consulting group, having been around for over 12 years and working with over 75 clients. Our 60 undergrads across 15 majors are passionate about bringing innovative, student perspectives to solve complex business problems.\n\nA case with MCG would be a great way for {company} to tap into the undergrad talent at MIT and advertise your company, all while contributing to ESG goals. Similarly, our undergrads look up to alums like yourself and the impactful companies you are leading.\n\nI'd love to schedule a short, 30-minute chat to present a formal pitch deck and answer any questions you may have. What do you think? Let me know which of these would work best for you (EST):\n\n{availability}\n\nHowever, I am very flexible so please let me know what works best for you!\n\nAll the best,\n{sender_first_name}",
+  "email_template": "Hi {first_name},\n\nI'm reaching out regarding a potential collaboration.\n\nMy name is {sender_name}, and {sender_intro}, {personalized_sentence}\n\nWe partner with organizations on short, high-impact projects and would love to explore whether a conversation makes sense for {company}.\n\nI'd love to schedule a short, 30-minute chat to share more details and answer any questions you may have. What do you think? Let me know which of these would work best for you (EST):\n\n{availability}\n\nHowever, I am very flexible so please let me know what works best for you!\n\nAll the best,\n{sender_first_name}",
   "google_sheet_id": "your_sheet_id_here",
   "google_service_account_json": "/absolute/path/to/service_account.json"
 }

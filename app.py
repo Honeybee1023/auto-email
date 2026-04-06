@@ -10,9 +10,9 @@ from mcg.parser import parse_profiles
 from mcg.prompt import generate_prompt
 from mcg.sheets import fetch_existing_emails
 
-st.set_page_config(page_title="MCG Email Sender", layout="wide")
+st.set_page_config(page_title="Auto Email Sender", layout="wide")
 
-st.title("MCG Email Sender")
+st.title("Auto Email Sender")
 
 with st.sidebar:
     st.header("Settings")
@@ -196,7 +196,7 @@ if st.session_state["profiles"]:
                 )
                 messages.append((to_addr, body))
         results = send_batch(
-            cfg, messages, subject=cfg.get("email_subject", "MCG Outreach")
+            cfg, messages, subject=cfg.get("email_subject", "Outreach")
         )
         st.session_state["send_results"] = results
 

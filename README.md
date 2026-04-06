@@ -1,6 +1,6 @@
-# MCG Email Sender
+# Auto Email Sender
 
-Local Streamlit app for parsing MIT alumni profiles, generating personalization prompts, sending outreach emails via Gmail SMTP, and logging activity to Google Sheets.
+Local Streamlit app for parsing copied profiles, generating personalization prompts, sending outreach emails via Gmail SMTP, and logging activity to Google Sheets.
 
 ## Setup
 

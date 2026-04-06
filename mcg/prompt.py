@@ -3,7 +3,7 @@ from typing import List
 from mcg.models import Profile
 
 
-PROMPT_HEADER = """For each person below, write a SHORT phrase (max 1-2 sentences) that I can insert into an outreach email after the sentence \"I'm also serving as Client Sourcing Director for MCG this year.\"
+PROMPT_HEADER = """For each person below, write a SHORT phrase (max 1-2 sentences) that I can insert into an outreach email after the sentence \"I'm also serving as [your role] this year.\"
 
 Rules:
 - The phrase should feel natural and warm, like something a real person would say
@@ -12,7 +12,7 @@ Rules:
 - Do NOT force connections. Do NOT reference obscure activities or hobbies from their profile — that comes across as stalkerish
 - Do NOT make it sound like a college admissions essay trying to force a quote into an argument
 - Keep it brief and understated. Less is more.
-- Start each phrase with a lowercase word (it follows a comma after \"...MCG this year, \" )
+- Start each phrase with a lowercase word (it follows a comma after \"...this year, \" )
 - Return ONLY a numbered list matching the order below. No extra commentary.
 """
 
