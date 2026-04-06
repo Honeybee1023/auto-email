@@ -4,4 +4,4 @@ __pycache__/
 *.pyo
 *.pyd
 .DS_Store
-.mcg-email-sender/
+.auto-email-sender/

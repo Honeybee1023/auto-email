@@ -2,7 +2,7 @@ import json
 import os
 from typing import Any, Dict
 
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".mcg-email-sender")
+CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".auto-email-sender")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 
 DEFAULT_CONFIG: Dict[str, Any] = {
