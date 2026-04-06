@@ -36,6 +36,10 @@ with st.sidebar:
     )
     st.caption("Do not share your Gmail App Password or service account key file.")
 
+    with st.expander("Google Sheets One-Time Setup"):
+        st.markdown(
+            \"\"\"\n1. Create or select a Google Cloud project.\n2. Enable the Google Sheets API.\n3. Create a Service Account and download the JSON key file.\n4. Share the Google Sheet with the service account email (Editor access).\n5. Paste the Sheet ID and JSON key path above.\n\"\"\"\n        )
+
     if st.button("Save Settings"):
         save_config(cfg)
         st.success("Settings saved.")
