@@ -1,7 +1,10 @@
 import streamlit as st
 
+from mcg.claude import parse_numbered_list
 from mcg.config import load_config, save_config
+from mcg.models import Profile
 from mcg.parser import parse_profiles
+from mcg.prompt import generate_prompt
 from mcg.sheets import fetch_existing_emails
 
 st.set_page_config(page_title="MCG Email Sender", layout="wide")
@@ -86,3 +89,35 @@ if st.session_state["profiles"]:
             st.success("Duplicate check complete.")
         except Exception as exc:  # noqa: BLE001
             st.warning(f"Could not read Google Sheet: {exc}")
+
+st.subheader("4. Generate Personalization")
+if st.session_state["profiles"]:
+    if st.button("Generate Claude Prompt"):
+        profiles = [
+            Profile(
+                first_name=row.get("First Name", ""),
+                full_name=row.get("Full Name", ""),
+                email=row.get("Email", ""),
+                company=row.get("Company", ""),
+                job_title=row.get("Job Title", ""),
+                mit_details=row.get("MIT Details", ""),
+                personalized_sentence=row.get("Personalized Sentence", ""),
+            )
+            for row in st.session_state["profiles"]
+        ]
+        st.session_state["claude_prompt"] = generate_prompt(profiles)
+
+    prompt_value = st.session_state.get("claude_prompt", "")
+    st.text_area("Claude Prompt (copy/paste)", value=prompt_value, height=200)
+    response = st.text_area("Paste Claude Response Here", height=200, key="claude_response")
+    if st.button("Apply Personalization"):
+        parsed = parse_numbered_list(response, len(st.session_state["profiles"]))
+        if not parsed:
+            st.warning("Could not parse response. Please ensure the list matches the profile count.")
+        else:
+            updated = []
+            for row, sentence in zip(st.session_state["profiles"], parsed):
+                row["Personalized Sentence"] = sentence
+                updated.append(row)
+            st.session_state["profiles"] = updated
+            st.success("Personalized sentences applied.")
