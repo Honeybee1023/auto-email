@@ -2,6 +2,7 @@ import streamlit as st
 
 from mcg.config import load_config, save_config
 from mcg.parser import parse_profiles
+from mcg.sheets import fetch_existing_emails
 
 st.set_page_config(page_title="MCG Email Sender", layout="wide")
 
@@ -61,3 +62,27 @@ if st.session_state["profiles"]:
     )
 else:
     st.info("No profiles parsed yet.")
+
+st.subheader("3. Duplicate Check (Google Sheets)")
+if st.session_state["profiles"]:
+    if st.button("Check Duplicates"):
+        try:
+            existing = fetch_existing_emails(
+                cfg.get("google_service_account_json", ""),
+                cfg.get("google_sheet_id", ""),
+            )
+            updated = []
+            for row in st.session_state["profiles"]:
+                email = str(row.get("Email", "")).strip().lower()
+                hit = existing.get(email)
+                if hit:
+                    row["Duplicate"] = "YES"
+                    row["Duplicate Info"] = f"{hit.get('Name (MCG)', '')} on {hit.get('Date (MM/DD)', '')}"
+                else:
+                    row["Duplicate"] = ""
+                    row["Duplicate Info"] = ""
+                updated.append(row)
+            st.session_state["profiles"] = updated
+            st.success("Duplicate check complete.")
+        except Exception as exc:  # noqa: BLE001
+            st.warning(f"Could not read Google Sheet: {exc}")
