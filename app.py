@@ -48,24 +48,45 @@ st.subheader("1. Paste Profiles")
 raw = st.text_area("Paste raw alumni profiles here", height=200, key="raw_profiles")
 if st.button("Parse Profiles"):
     parsed = parse_profiles(raw)
-    st.session_state["profiles"] = [
-        {
-            "First Name": p.first_name,
-            "Full Name": p.full_name,
-            "Email": p.email,
-            "Company": p.company,
-            "Job Title": p.job_title,
-            "MIT Details": p.mit_details,
-            "Personalized Sentence": p.personalized_sentence,
-        }
-        for p in parsed
-    ]
+    if not parsed and raw.strip():
+        st.session_state["profiles"] = [
+            {
+                "First Name": "",
+                "Full Name": "",
+                "Email": "",
+                "Company": "",
+                "Job Title": "",
+                "MIT Details": "",
+                "Personalized Sentence": "",
+            }
+        ]
+        st.session_state["parse_error_raw"] = raw
+    else:
+        st.session_state["profiles"] = [
+            {
+                "First Name": p.first_name,
+                "Full Name": p.full_name,
+                "Email": p.email,
+                "Company": p.company,
+                "Job Title": p.job_title,
+                "MIT Details": p.mit_details,
+                "Personalized Sentence": p.personalized_sentence,
+            }
+            for p in parsed
+        ]
+        st.session_state["parse_error_raw"] = ""
 
 st.subheader("2. Review Parsed Data")
 if st.session_state["profiles"]:
     st.session_state["profiles"] = st.data_editor(
         st.session_state["profiles"], num_rows="dynamic", use_container_width=True
     )
+    if st.session_state.get("parse_error_raw"):
+        st.text_area(
+            "Raw text (parsing failed; please fill fields manually)",
+            value=st.session_state["parse_error_raw"],
+            height=150,
+        )
 else:
     st.info("No profiles parsed yet.")
 
