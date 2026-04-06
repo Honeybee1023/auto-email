@@ -1,14 +1,14 @@
 import streamlit as st
 
-from mcg.claude import parse_numbered_list
-from mcg.config import load_config, save_config
-from mcg.email import render_email
-from mcg.smtp_sender import send_batch
-from mcg.sheets import append_rows, build_log_row
-from mcg.models import Profile
-from mcg.parser import parse_profiles
-from mcg.prompt import generate_prompt
-from mcg.sheets import fetch_existing_emails
+from auto_email.claude import parse_numbered_list
+from auto_email.config import load_config, save_config
+from auto_email.email import render_email
+from auto_email.smtp_sender import send_batch
+from auto_email.sheets import append_rows, build_log_row
+from auto_email.models import Profile
+from auto_email.parser import parse_profiles
+from auto_email.prompt import generate_prompt
+from auto_email.sheets import fetch_existing_emails
 
 st.set_page_config(page_title="Auto Email Sender", layout="wide")
 

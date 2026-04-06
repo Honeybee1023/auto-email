@@ -1,6 +1,6 @@
 from typing import Dict
 
-from mcg.models import Profile
+from auto_email.models import Profile
 
 
 def sender_first_name(sender_name: str) -> str:

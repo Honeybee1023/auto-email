@@ -1,7 +1,7 @@
 import re
 from typing import List, Optional
 
-from mcg.models import Profile
+from auto_email.models import Profile
 
 SECTION_HEADERS = ["Work Information", "Personal Information", "MIT Information"]
 

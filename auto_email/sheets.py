@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import gspread
 
-from mcg.models import Profile
+from auto_email.models import Profile
 
 
 def _open_sheet(service_account_json: str, sheet_id: str):

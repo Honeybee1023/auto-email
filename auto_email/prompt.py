@@ -1,6 +1,6 @@
 from typing import List
 
-from mcg.models import Profile
+from auto_email.models import Profile
 
 
 PROMPT_HEADER = """For each person below, write a SHORT phrase (max 1-2 sentences) that I can insert into an outreach email after the sentence \"I'm also serving as [your role] this year.\"
