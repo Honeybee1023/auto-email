@@ -15,6 +15,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "email_template": "",
     "google_sheet_id": "",
     "google_service_account_json": "",
+    "sheet_col_sender_name": "Sender Name",
+    "sheet_col_email": "Client Email",
+    "sheet_col_client_name": "Client Name",
+    "sheet_col_company": "Company",
+    "sheet_col_date": "Date (MM/DD)",
+    "sheet_col_notes": "Notes",
 }
 
 
