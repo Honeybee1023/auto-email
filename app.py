@@ -2,6 +2,7 @@ import streamlit as st
 
 from mcg.claude import parse_numbered_list
 from mcg.config import load_config, save_config
+from mcg.email import render_email
 from mcg.models import Profile
 from mcg.parser import parse_profiles
 from mcg.prompt import generate_prompt
@@ -121,3 +122,28 @@ if st.session_state["profiles"]:
                 updated.append(row)
             st.session_state["profiles"] = updated
             st.success("Personalized sentences applied.")
+
+st.subheader("5. Preview Emails")
+if st.session_state["profiles"]:
+    if not cfg.get("email_template"):
+        st.info("Add an email template in Settings to preview emails.")
+    else:
+        for idx, row in enumerate(st.session_state["profiles"]):
+            profile = Profile(
+                first_name=row.get("First Name", ""),
+                full_name=row.get("Full Name", ""),
+                email=row.get("Email", ""),
+                company=row.get("Company", ""),
+                job_title=row.get("Job Title", ""),
+                mit_details=row.get("MIT Details", ""),
+                personalized_sentence=row.get("Personalized Sentence", ""),
+            )
+            body = render_email(cfg["email_template"], profile, cfg)
+            label = f"{profile.full_name or profile.email}"
+            with st.expander(label):
+                st.text_area(
+                    "Email Body",
+                    value=body,
+                    height=250,
+                    key=f"email_body_{idx}",
+                )
