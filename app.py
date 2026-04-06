@@ -4,6 +4,7 @@ from mcg.claude import parse_numbered_list
 from mcg.config import load_config, save_config
 from mcg.email import render_email
 from mcg.smtp_sender import send_batch
+from mcg.sheets import append_rows, build_log_row
 from mcg.models import Profile
 from mcg.parser import parse_profiles
 from mcg.prompt import generate_prompt
@@ -153,15 +154,43 @@ st.subheader("6. Send")
 if st.session_state["profiles"]:
     if st.button("Send All"):
         messages = []
+        email_to_profile = {}
         for idx, row in enumerate(st.session_state["profiles"]):
             to_addr = row.get("Email", "")
             body = st.session_state.get(f"email_body_{idx}", "")
             if to_addr and body:
+                email_to_profile[to_addr] = Profile(
+                    first_name=row.get("First Name", ""),
+                    full_name=row.get("Full Name", ""),
+                    email=row.get("Email", ""),
+                    company=row.get("Company", ""),
+                    job_title=row.get("Job Title", ""),
+                    mit_details=row.get("MIT Details", ""),
+                    personalized_sentence=row.get("Personalized Sentence", ""),
+                )
                 messages.append((to_addr, body))
         results = send_batch(
             cfg, messages, subject=cfg.get("email_subject", "MCG Outreach")
         )
         st.session_state["send_results"] = results
+
+        try:
+            rows = [
+                build_log_row(cfg.get("sender_name", ""), email_to_profile[email])
+                for email, status in results.items()
+                if status == "sent"
+            ]
+            if rows:
+                append_rows(
+                    cfg.get("google_service_account_json", ""),
+                    cfg.get("google_sheet_id", ""),
+                    rows,
+                )
+                st.success("Logged sent emails to Google Sheets.")
+        except Exception as exc:  # noqa: BLE001
+            st.warning(f"Could not write to Google Sheet: {exc}")
+            if rows:
+                st.text_area("Rows to add manually", value=str(rows), height=150)
 
     if st.session_state.get("send_results"):
         st.write("Send results:")
