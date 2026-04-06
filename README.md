@@ -18,3 +18,5 @@ streamlit run app.py
 
 ## Notes
 - This repo contains no personal data. Configure your own settings locally.
+- Settings are stored at `~/.mcg-email-sender/config.json`.
+- See `config.example.json` for placeholder values.
