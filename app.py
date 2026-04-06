@@ -121,6 +121,7 @@ if st.session_state["profiles"]:
             existing = fetch_existing_emails(
                 cfg.get("google_service_account_json", ""),
                 cfg.get("google_sheet_id", ""),
+                cfg.get("sheet_col_email", "Client Email"),
             )
             updated = []
             for row in st.session_state["profiles"]:
@@ -128,7 +129,11 @@ if st.session_state["profiles"]:
                 hit = existing.get(email)
                 if hit:
                     row["Duplicate"] = "YES"
-                    row["Duplicate Info"] = f"{hit.get('Name (MCG)', '')} on {hit.get('Date (MM/DD)', '')}"
+                    sender_col = cfg.get("sheet_col_sender_name", "Sender Name")
+                    date_col = cfg.get("sheet_col_date", "Date (MM/DD)")
+                    sender = hit.get(sender_col, "")
+                    date_val = hit.get(date_col, "")
+                    row["Duplicate Info"] = f"{sender} on {date_val}"
                 else:
                     row["Duplicate"] = ""
                     row["Duplicate Info"] = ""

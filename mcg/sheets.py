@@ -12,12 +12,14 @@ def _open_sheet(service_account_json: str, sheet_id: str):
     return sheet.get_worksheet(0)
 
 
-def fetch_existing_emails(service_account_json: str, sheet_id: str) -> Dict[str, Dict[str, str]]:
+def fetch_existing_emails(
+    service_account_json: str, sheet_id: str, email_column: str
+) -> Dict[str, Dict[str, str]]:
     ws = _open_sheet(service_account_json, sheet_id)
     rows = ws.get_all_records()
     existing: Dict[str, Dict[str, str]] = {}
     for row in rows:
-        email = str(row.get("Email of Client", "")).strip().lower()
+        email = str(row.get(email_column, "")).strip().lower()
         if email:
             existing[email] = row
     return existing
