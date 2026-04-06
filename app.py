@@ -34,6 +34,7 @@ with st.sidebar:
     cfg["google_service_account_json"] = st.text_input(
         "Service Account JSON Path", value=cfg["google_service_account_json"]
     )
+    st.caption("Do not share your Gmail App Password or service account key file.")
 
     if st.button("Save Settings"):
         save_config(cfg)
