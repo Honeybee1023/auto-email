@@ -3,6 +3,7 @@ import streamlit as st
 from mcg.claude import parse_numbered_list
 from mcg.config import load_config, save_config
 from mcg.email import render_email
+from mcg.smtp_sender import send_batch
 from mcg.models import Profile
 from mcg.parser import parse_profiles
 from mcg.prompt import generate_prompt
@@ -147,3 +148,21 @@ if st.session_state["profiles"]:
                     height=250,
                     key=f"email_body_{idx}",
                 )
+
+st.subheader("6. Send")
+if st.session_state["profiles"]:
+    if st.button("Send All"):
+        messages = []
+        for idx, row in enumerate(st.session_state["profiles"]):
+            to_addr = row.get("Email", "")
+            body = st.session_state.get(f"email_body_{idx}", "")
+            if to_addr and body:
+                messages.append((to_addr, body))
+        results = send_batch(
+            cfg, messages, subject=cfg.get("email_subject", "MCG Outreach")
+        )
+        st.session_state["send_results"] = results
+
+    if st.session_state.get("send_results"):
+        st.write("Send results:")
+        st.json(st.session_state["send_results"])
