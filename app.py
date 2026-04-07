@@ -18,6 +18,18 @@ st.title("Auto Email Sender")
 with st.sidebar:
     st.header("Settings")
     cfg = load_config()
+    saved_templates = cfg.get("saved_templates", [])
+    template_options = ["(Current)"] + [
+        t.get("name", f"Template {i+1}") for i, t in enumerate(saved_templates)
+    ]
+    selected_template = st.selectbox("Saved Templates", options=template_options)
+    if selected_template != "(Current)":
+        idx = template_options.index(selected_template) - 1
+        if 0 <= idx < len(saved_templates):
+            st.session_state["email_template_field"] = saved_templates[idx].get(
+                "body", ""
+            )
+
     with st.form("settings_form", clear_on_submit=False):
         st.subheader("Required Settings")
         cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
@@ -25,8 +37,11 @@ with st.sidebar:
             "Gmail App Password", value=cfg["gmail_app_password"], type="password"
         )
         cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
+        template_value = st.session_state.get(
+            "email_template_field", cfg["email_template"]
+        )
         cfg["email_template"] = st.text_area(
-            "Email Template", value=cfg["email_template"], height=300
+            "Email Template", value=template_value, height=300, key="email_template_field"
         )
         cfg["google_sheet_id"] = st.text_input(
             "Google Sheet ID", value=cfg["google_sheet_id"]
@@ -76,6 +91,14 @@ with st.sidebar:
 
         submitted = st.form_submit_button("Save Settings")
         if submitted:
+            template_body = cfg.get("email_template", "").strip()
+            if template_body:
+                exists = any(t.get("body") == template_body for t in saved_templates)
+                if not exists:
+                    first_line = template_body.splitlines()[0].strip()
+                    name = first_line[:40] or f"Template {len(saved_templates) + 1}"
+                    saved_templates.append({"name": name, "body": template_body})
+                    cfg["saved_templates"] = saved_templates
             save_config(cfg)
             st.success("Settings saved.")
 

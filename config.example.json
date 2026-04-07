@@ -13,5 +13,6 @@
   "sheet_col_client_name": "Client Name",
   "sheet_col_company": "Company",
   "sheet_col_date": "Date (MM/DD)",
-  "sheet_col_notes": "Notes"
+  "sheet_col_notes": "Notes",
+  "saved_templates": []
 }
