@@ -19,14 +19,12 @@ with st.sidebar:
     st.header("Settings")
     cfg = load_config()
     with st.form("settings_form", clear_on_submit=False):
+        st.subheader("Required Settings")
         cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
         cfg["gmail_app_password"] = st.text_input(
             "Gmail App Password", value=cfg["gmail_app_password"], type="password"
         )
         cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
-        cfg["sender_intro"] = st.text_area("Sender Intro", value=cfg["sender_intro"])
-        cfg["email_subject"] = st.text_input("Email Subject", value=cfg["email_subject"])
-        cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
         cfg["email_template"] = st.text_area(
             "Email Template", value=cfg["email_template"], height=300
         )
@@ -36,6 +34,14 @@ with st.sidebar:
         cfg["google_service_account_json"] = st.text_input(
             "Service Account JSON Path", value=cfg["google_service_account_json"]
         )
+
+        st.subheader("Optional Settings")
+        cfg["sender_intro"] = st.text_area("Sender Intro", value=cfg["sender_intro"])
+        cfg["email_subject"] = st.text_input(
+            "Email Subject (optional)", value=cfg["email_subject"]
+        )
+        cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
+
         st.subheader("Sheet Columns")
         cfg["sheet_col_sender_name"] = st.text_input(
             "Sender Name Column", value=cfg["sheet_col_sender_name"]
@@ -81,8 +87,6 @@ with st.sidebar:
         missing.append("Gmail App Password")
     if not cfg.get("sender_name"):
         missing.append("Sender Name")
-    if not cfg.get("email_subject"):
-        missing.append("Email Subject")
     if not cfg.get("email_template"):
         missing.append("Email Template")
 
@@ -268,9 +272,8 @@ if st.session_state["profiles"]:
                     personalized_sentence=row.get("Personalized Sentence", ""),
                 )
                 messages.append((to_addr, body))
-        results = send_batch(
-            cfg, messages, subject=cfg.get("email_subject", "Outreach")
-        )
+        subject = cfg.get("email_subject") or "Outreach"
+        results = send_batch(cfg, messages, subject=subject)
         st.session_state["send_results"] = results
 
         try:
