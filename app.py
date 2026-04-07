@@ -34,7 +34,7 @@ with st.sidebar:
         st.session_state["show_select_template"] = True
 
     if st.session_state["show_add_template"]:
-        with st.modal("Add New Email Template"):
+        with st.expander("Add New Email Template", expanded=True):
             new_body = st.text_area(
                 "Email Template", height=400, key="new_template_body"
             )
@@ -44,7 +44,7 @@ with st.sidebar:
                 st.session_state["show_add_template"] = False
 
     if st.session_state["show_view_template"]:
-        with st.modal("Current Email Template"):
+        with st.expander("Current Email Template", expanded=True):
             current_body = st.session_state.get(
                 "email_template_field", cfg.get("email_template", "")
             )
@@ -53,7 +53,7 @@ with st.sidebar:
                 st.session_state["show_view_template"] = False
 
     if st.session_state["show_select_template"]:
-        with st.modal("Select Saved Email Template"):
+        with st.expander("Select Saved Email Template", expanded=True):
             template_options = [
                 t.get("name", f"Template {i+1}") for i, t in enumerate(saved_templates)
             ]
