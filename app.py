@@ -22,7 +22,7 @@ with st.sidebar:
     cfg["gmail_app_password"] = st.text_input(
         "Gmail App Password", value=cfg["gmail_app_password"], type="password"
     )
-    cfg["sender_name"] = st.text_input("Sender Name", value=cfg["sender_name"])
+    cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
     cfg["sender_intro"] = st.text_area("Sender Intro", value=cfg["sender_intro"])
     cfg["email_subject"] = st.text_input("Email Subject", value=cfg["email_subject"])
     cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
