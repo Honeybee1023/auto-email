@@ -15,59 +15,17 @@ st.set_page_config(page_title="Auto Email Sender", layout="wide")
 
 st.title("Auto Email Sender")
 
+cfg = load_config()
+saved_templates = cfg.get("saved_templates", [])
+if "show_add_template" not in st.session_state:
+    st.session_state["show_add_template"] = False
+if "show_view_template" not in st.session_state:
+    st.session_state["show_view_template"] = False
+if "show_select_template" not in st.session_state:
+    st.session_state["show_select_template"] = False
+
 with st.sidebar:
     st.header("Settings")
-    cfg = load_config()
-    saved_templates = cfg.get("saved_templates", [])
-    if "show_add_template" not in st.session_state:
-        st.session_state["show_add_template"] = False
-    if "show_view_template" not in st.session_state:
-        st.session_state["show_view_template"] = False
-    if "show_select_template" not in st.session_state:
-        st.session_state["show_select_template"] = False
-
-    if st.button("Add New Email Template"):
-        st.session_state["show_add_template"] = True
-    if st.button("View Current Email Template"):
-        st.session_state["show_view_template"] = True
-    if st.button("Select Saved Email Template"):
-        st.session_state["show_select_template"] = True
-
-    if st.session_state["show_add_template"]:
-        with st.expander("Add New Email Template", expanded=True):
-            new_body = st.text_area(
-                "Email Template", height=400, key="new_template_body"
-            )
-            if st.button("Done"):
-                if new_body.strip():
-                    st.session_state["email_template_field"] = new_body.strip()
-                st.session_state["show_add_template"] = False
-
-    if st.session_state["show_view_template"]:
-        with st.expander("Current Email Template", expanded=True):
-            current_body = st.session_state.get(
-                "email_template_field", cfg.get("email_template", "")
-            )
-            st.text_area("Email Template", value=current_body, height=400, disabled=True)
-            if st.button("Close"):
-                st.session_state["show_view_template"] = False
-
-    if st.session_state["show_select_template"]:
-        with st.expander("Select Saved Email Template", expanded=True):
-            template_options = [
-                t.get("name", f"Template {i+1}") for i, t in enumerate(saved_templates)
-            ]
-            if not template_options:
-                st.info("No saved templates yet.")
-            else:
-                choice = st.selectbox("Saved Templates", options=template_options)
-                if st.button("Use Selected Template"):
-                    idx = template_options.index(choice)
-                    st.session_state["email_template_field"] = saved_templates[idx].get(
-                        "body", ""
-                    )
-                    st.session_state["show_select_template"] = False
-
     with st.form("settings_form", clear_on_submit=False):
         st.subheader("Required Settings")
         cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
@@ -75,9 +33,7 @@ with st.sidebar:
             "Gmail App Password", value=cfg["gmail_app_password"], type="password"
         )
         cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
-        template_value = st.session_state.get(
-            "email_template_field", cfg["email_template"]
-        )
+        template_value = st.session_state.get("email_template_field", cfg["email_template"])
         cfg["email_template"] = template_value
         cfg["google_sheet_id"] = st.text_input(
             "Google Sheet ID", value=cfg["google_sheet_id"]
@@ -170,6 +126,47 @@ with st.sidebar:
 
     if not sheets_ready:
         st.warning("Google Sheets is not fully configured. Dedup and logging will fail.")
+
+st.subheader("Email Template")
+if st.button("Add New Email Template"):
+    st.session_state["show_add_template"] = True
+if st.button("View Current Email Template"):
+    st.session_state["show_view_template"] = True
+if st.button("Select Saved Email Template"):
+    st.session_state["show_select_template"] = True
+
+if st.session_state["show_add_template"]:
+    with st.expander("Add New Email Template", expanded=True):
+        new_body = st.text_area("Email Template", height=400, key="new_template_body")
+        if st.button("Done"):
+            if new_body.strip():
+                st.session_state["email_template_field"] = new_body.strip()
+            st.session_state["show_add_template"] = False
+
+if st.session_state["show_view_template"]:
+    with st.expander("Current Email Template", expanded=True):
+        current_body = st.session_state.get(
+            "email_template_field", cfg.get("email_template", "")
+        )
+        st.text_area("Email Template", value=current_body, height=400, disabled=True)
+        if st.button("Close"):
+            st.session_state["show_view_template"] = False
+
+if st.session_state["show_select_template"]:
+    with st.expander("Select Saved Email Template", expanded=True):
+        template_options = [
+            t.get("name", f"Template {i+1}") for i, t in enumerate(saved_templates)
+        ]
+        if not template_options:
+            st.info("No saved templates yet.")
+        else:
+            choice = st.selectbox("Saved Templates", options=template_options)
+            if st.button("Use Selected Template"):
+                idx = template_options.index(choice)
+                st.session_state["email_template_field"] = saved_templates[idx].get(
+                    "body", ""
+                )
+                st.session_state["show_select_template"] = False
 
 st.write("Workflow steps will appear here.")
 
