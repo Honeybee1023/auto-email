@@ -18,54 +18,60 @@ st.title("Auto Email Sender")
 with st.sidebar:
     st.header("Settings")
     cfg = load_config()
-    cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
-    cfg["gmail_app_password"] = st.text_input(
-        "Gmail App Password", value=cfg["gmail_app_password"], type="password"
-    )
-    cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
-    cfg["sender_intro"] = st.text_area("Sender Intro", value=cfg["sender_intro"])
-    cfg["email_subject"] = st.text_input("Email Subject", value=cfg["email_subject"])
-    cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
-    cfg["email_template"] = st.text_area(
-        "Email Template", value=cfg["email_template"], height=300
-    )
-    cfg["google_sheet_id"] = st.text_input(
-        "Google Sheet ID", value=cfg["google_sheet_id"]
-    )
-    cfg["google_service_account_json"] = st.text_input(
-        "Service Account JSON Path", value=cfg["google_service_account_json"]
-    )
-    st.subheader("Sheet Columns")
-    cfg["sheet_col_sender_name"] = st.text_input(
-        "Sender Name Column", value=cfg["sheet_col_sender_name"]
-    )
-    cfg["sheet_col_email"] = st.text_input(
-        "Client Email Column", value=cfg["sheet_col_email"]
-    )
-    cfg["sheet_col_client_name"] = st.text_input(
-        "Client Name Column", value=cfg["sheet_col_client_name"]
-    )
-    cfg["sheet_col_company"] = st.text_input(
-        "Company Column", value=cfg["sheet_col_company"]
-    )
-    cfg["sheet_col_date"] = st.text_input(
-        "Date Column", value=cfg["sheet_col_date"]
-    )
-    cfg["sheet_col_notes"] = st.text_input(
-        "Notes Column", value=cfg["sheet_col_notes"]
-    )
-    st.caption("Do not share your Gmail App Password or service account key file.")
+    with st.form("settings_form", clear_on_submit=False):
+        cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
+        cfg["gmail_app_password"] = st.text_input(
+            "Gmail App Password", value=cfg["gmail_app_password"], type="password"
+        )
+        cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
+        cfg["sender_intro"] = st.text_area("Sender Intro", value=cfg["sender_intro"])
+        cfg["email_subject"] = st.text_input("Email Subject", value=cfg["email_subject"])
+        cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
+        cfg["email_template"] = st.text_area(
+            "Email Template", value=cfg["email_template"], height=300
+        )
+        cfg["google_sheet_id"] = st.text_input(
+            "Google Sheet ID", value=cfg["google_sheet_id"]
+        )
+        cfg["google_service_account_json"] = st.text_input(
+            "Service Account JSON Path", value=cfg["google_service_account_json"]
+        )
+        st.subheader("Sheet Columns")
+        cfg["sheet_col_sender_name"] = st.text_input(
+            "Sender Name Column", value=cfg["sheet_col_sender_name"]
+        )
+        cfg["sheet_col_email"] = st.text_input(
+            "Client Email Column", value=cfg["sheet_col_email"]
+        )
+        cfg["sheet_col_client_name"] = st.text_input(
+            "Client Name Column", value=cfg["sheet_col_client_name"]
+        )
+        cfg["sheet_col_company"] = st.text_input(
+            "Company Column", value=cfg["sheet_col_company"]
+        )
+        cfg["sheet_col_date"] = st.text_input(
+            "Date Column", value=cfg["sheet_col_date"]
+        )
+        cfg["sheet_col_notes"] = st.text_input(
+            "Notes Column", value=cfg["sheet_col_notes"]
+        )
+        st.caption("Do not share your Gmail App Password or service account key file.")
 
-    with st.expander("Google Sheets One-Time Setup"):
-        st.markdown(
-            """
+        with st.expander("Google Sheets One-Time Setup"):
+            st.markdown(
+                """
 1. Create or select a Google Cloud project.
 2. Enable the Google Sheets API.
 3. Create a Service Account and download the JSON key file.
 4. Share the Google Sheet with the service account email (Editor access).
 5. Paste the Sheet ID and JSON key path above.
 """
-        )
+            )
+
+        submitted = st.form_submit_button("Save Settings")
+        if submitted:
+            save_config(cfg)
+            st.success("Settings saved.")
 
     st.subheader("Status")
     missing = []
@@ -101,10 +107,6 @@ with st.sidebar:
 
     if not sheets_ready:
         st.warning("Google Sheets is not fully configured. Dedup and logging will fail.")
-
-    if st.button("Save Settings"):
-        save_config(cfg)
-        st.success("Settings saved.")
 
 st.write("Workflow steps will appear here.")
 
