@@ -26,12 +26,11 @@ with st.sidebar:
     if "show_select_template" not in st.session_state:
         st.session_state["show_select_template"] = False
 
-    cols = st.columns(3)
-    if cols[0].button("Add New Email Template"):
+    if st.button("Add New Email Template"):
         st.session_state["show_add_template"] = True
-    if cols[1].button("View Current Email Template"):
+    if st.button("View Current Email Template"):
         st.session_state["show_view_template"] = True
-    if cols[2].button("Select Saved Email Template"):
+    if st.button("Select Saved Email Template"):
         st.session_state["show_select_template"] = True
 
     if st.session_state["show_add_template"]:
@@ -79,9 +78,7 @@ with st.sidebar:
         template_value = st.session_state.get(
             "email_template_field", cfg["email_template"]
         )
-        cfg["email_template"] = st.text_area(
-            "Email Template", value=template_value, height=300, key="email_template_field"
-        )
+        cfg["email_template"] = template_value
         cfg["google_sheet_id"] = st.text_input(
             "Google Sheet ID", value=cfg["google_sheet_id"]
         )
