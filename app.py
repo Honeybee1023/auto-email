@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 
 from auto_email.claude import parse_numbered_list
@@ -65,6 +66,41 @@ with st.sidebar:
 5. Paste the Sheet ID and JSON key path above.
 """
         )
+
+    st.subheader("Status")
+    missing = []
+    if not cfg.get("gmail_address"):
+        missing.append("Gmail Address")
+    if not cfg.get("gmail_app_password"):
+        missing.append("Gmail App Password")
+    if not cfg.get("sender_name"):
+        missing.append("Sender Name")
+    if not cfg.get("email_subject"):
+        missing.append("Email Subject")
+    if not cfg.get("email_template"):
+        missing.append("Email Template")
+
+    sheets_ready = True
+    if not cfg.get("google_sheet_id"):
+        sheets_ready = False
+        missing.append("Google Sheet ID")
+    json_path = cfg.get("google_service_account_json", "")
+    if not json_path:
+        sheets_ready = False
+        missing.append("Service Account JSON Path")
+    elif not os.path.exists(json_path):
+        sheets_ready = False
+        missing.append("Service Account JSON File (not found)")
+
+    ready_to_send = len(missing) == 0
+    if ready_to_send:
+        st.success("Ready to send: all required settings are present.")
+    else:
+        st.error("Not ready to send. Missing:")
+        st.write(", ".join(missing))
+
+    if not sheets_ready:
+        st.warning("Google Sheets is not fully configured. Dedup and logging will fail.")
 
     if st.button("Save Settings"):
         save_config(cfg)
@@ -209,7 +245,11 @@ if st.session_state["profiles"]:
 
 st.subheader("6. Send")
 if st.session_state["profiles"]:
-    if st.button("Send All"):
+    confirm_send = st.checkbox(
+        "I confirm all settings are correct and I want to send now."
+    )
+    send_disabled = not (confirm_send and ready_to_send)
+    if st.button("Send All", disabled=send_disabled):
         messages = []
         email_to_profile = {}
         for idx, row in enumerate(st.session_state["profiles"]):
