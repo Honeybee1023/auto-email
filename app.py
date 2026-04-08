@@ -330,6 +330,7 @@ if sheet_test:
             sheet_test_status.empty()
         except Exception as exc:  # noqa: BLE001
             st.warning(f"Google Sheets connection failed: {exc}")
+            st.text_area("Error details", value=repr(exc), height=120)
 
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
