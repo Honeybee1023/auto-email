@@ -339,6 +339,9 @@ if st.session_state["profiles"]:
                     personalized_sentence=row.get("Personalized Sentence", ""),
                 )
                 email_to_profile[to_addr] = profile
+                if not profile.company:
+                    st.warning(f"Missing company for {to_addr}. Please fill it in.")
+                    continue
                 subject_template = cfg.get("email_subject") or "Outreach"
                 subject = subject_template.format(company=profile.company)
                 messages.append((to_addr, subject, body))
