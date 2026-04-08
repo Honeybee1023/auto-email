@@ -312,7 +312,7 @@ if st.button("Send Test Email to Myself"):
     elif not cfg.get("email_template"):
         st.warning("Please set an email template in Settings.")
     else:
-        test_subject = cfg.get("email_subject") or "Outreach"
+        test_subject = cfg.get("email_subject") or "MIT Consulting Group x {company}"
         test_body = cfg.get("email_template", "")
         results = send_batch(cfg, [(cfg.get("gmail_address", ""), test_subject, test_body)])
         st.session_state["send_results"] = results
@@ -342,7 +342,7 @@ if st.session_state["profiles"]:
                 if not profile.company:
                     st.warning(f"Missing company for {to_addr}. Please fill it in.")
                     continue
-                subject_template = cfg.get("email_subject") or "Outreach"
+                subject_template = cfg.get("email_subject") or "MIT Consulting Group x {company}"
                 subject = subject_template.format(company=profile.company)
                 messages.append((to_addr, subject, body))
         results = send_batch(cfg, messages)
