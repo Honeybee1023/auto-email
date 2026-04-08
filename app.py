@@ -241,6 +241,13 @@ if st.session_state["profiles"]:
     if dupes:
         st.info(f"Removed {dupes} duplicate rows by email.")
         st.session_state["profiles"] = deduped
+
+    current_sig = [str(r.get("Email", "")).strip().lower() for r in st.session_state["profiles"]]
+    if st.session_state.get("profiles_sig") != current_sig:
+        for key in list(st.session_state.keys()):
+            if key.startswith("email_body_") or key.startswith("email_subject_"):
+                del st.session_state[key]
+        st.session_state["profiles_sig"] = current_sig
     st.session_state["profiles"] = st.data_editor(
         st.session_state["profiles"], num_rows="dynamic", use_container_width=True
     )
