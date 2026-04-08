@@ -195,6 +195,20 @@ if st.button("Parse Profiles"):
 
 st.subheader("2. Review Parsed Data")
 if st.session_state["profiles"]:
+    seen_emails = set()
+    deduped = []
+    dupes = 0
+    for row in st.session_state["profiles"]:
+        email = str(row.get("Email", "")).strip().lower()
+        if email and email in seen_emails:
+            dupes += 1
+            continue
+        if email:
+            seen_emails.add(email)
+        deduped.append(row)
+    if dupes:
+        st.info(f"Removed {dupes} duplicate rows by email.")
+        st.session_state["profiles"] = deduped
     st.session_state["profiles"] = st.data_editor(
         st.session_state["profiles"], num_rows="dynamic", use_container_width=True
     )
