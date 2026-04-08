@@ -6,6 +6,7 @@ import streamlit as st
 
 from auto_email.claude import parse_numbered_list
 from auto_email.config import load_config, save_config
+from auto_email.draft import clear_draft, load_draft, save_draft
 from auto_email.email import render_email
 from auto_email.gmail_oauth import run_auth_flow
 from auto_email.mailer import send_batch
@@ -16,6 +17,20 @@ from auto_email.prompt import generate_prompt
 from auto_email.sheets import fetch_existing_emails
 
 st.set_page_config(page_title="Auto Email Sender", layout="wide")
+
+
+def _collect_draft() -> dict:
+    edited_bodies = {}
+    for key, value in st.session_state.items():
+        if key.startswith("email_body_"):
+            edited_bodies[key] = value
+    return {
+        "raw_profiles": st.session_state.get("raw_profiles", ""),
+        "profiles": st.session_state.get("profiles", []),
+        "claude_prompt": st.session_state.get("claude_prompt", ""),
+        "claude_response": st.session_state.get("claude_response", ""),
+        "edited_bodies": edited_bodies,
+    }
 
 st.title("Auto Email Sender")
 
@@ -30,6 +45,23 @@ if "show_select_template" not in st.session_state:
 
 with st.sidebar:
     st.header("Settings")
+    if "draft_loaded" not in st.session_state:
+        draft = load_draft()
+        if draft:
+            st.session_state.update(draft)
+            for key, value in draft.get("edited_bodies", {}).items():
+                st.session_state[key] = value
+        st.session_state["draft_loaded"] = True
+    st.subheader("Drafts")
+    st.session_state["auto_save_draft"] = st.checkbox(
+        "Auto-save draft", value=st.session_state.get("auto_save_draft", True)
+    )
+    if st.button("Save Draft Now"):
+        save_draft(_collect_draft())
+        st.success("Draft saved.")
+    if st.button("Clear Draft"):
+        clear_draft()
+        st.success("Draft cleared.")
     with st.form("settings_form", clear_on_submit=False):
         st.subheader("Required Settings")
         cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
@@ -448,3 +480,6 @@ if st.session_state["profiles"]:
     if st.session_state.get("send_results"):
         st.write("Send results:")
         st.json(st.session_state["send_results"])
+
+if st.session_state.get("auto_save_draft"):
+    save_draft(_collect_draft())
