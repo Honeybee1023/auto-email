@@ -49,25 +49,6 @@ with st.sidebar:
         )
         cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
 
-        st.subheader("Sheet Columns")
-        cfg["sheet_col_sender_name"] = st.text_input(
-            "Sender Name Column", value=cfg["sheet_col_sender_name"]
-        )
-        cfg["sheet_col_email"] = st.text_input(
-            "Client Email Column", value=cfg["sheet_col_email"]
-        )
-        cfg["sheet_col_client_name"] = st.text_input(
-            "Client Name Column", value=cfg["sheet_col_client_name"]
-        )
-        cfg["sheet_col_company"] = st.text_input(
-            "Company Column", value=cfg["sheet_col_company"]
-        )
-        cfg["sheet_col_date"] = st.text_input(
-            "Date Column", value=cfg["sheet_col_date"]
-        )
-        cfg["sheet_col_notes"] = st.text_input(
-            "Notes Column", value=cfg["sheet_col_notes"]
-        )
         st.caption("Do not share your Gmail App Password or service account key file.")
 
         with st.expander("Google Sheets One-Time Setup"):
