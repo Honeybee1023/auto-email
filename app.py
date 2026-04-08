@@ -242,7 +242,13 @@ if st.session_state["profiles"]:
         st.info(f"Removed {dupes} duplicate rows by email.")
         st.session_state["profiles"] = deduped
 
-    current_sig = [str(r.get("Email", "")).strip().lower() for r in st.session_state["profiles"]]
+    current_sig = [
+        (
+            str(r.get("Email", "")).strip().lower(),
+            str(r.get("Personalized Sentence", "")).strip(),
+        )
+        for r in st.session_state["profiles"]
+    ]
     if st.session_state.get("profiles_sig") != current_sig:
         for key in list(st.session_state.keys()):
             if key.startswith("email_body_") or key.startswith("email_subject_"):
@@ -330,6 +336,10 @@ if st.session_state["profiles"]:
 
 st.subheader("5. Preview Emails")
 if st.session_state["profiles"]:
+    if st.button("Refresh Previews"):
+        for key in list(st.session_state.keys()):
+            if key.startswith("email_body_") or key.startswith("email_subject_"):
+                del st.session_state[key]
     if not cfg.get("email_template"):
         st.info("Add an email template in Settings to preview emails.")
     else:
