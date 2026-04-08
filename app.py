@@ -6,7 +6,8 @@ import streamlit as st
 from auto_email.claude import parse_numbered_list
 from auto_email.config import load_config, save_config
 from auto_email.email import render_email
-from auto_email.smtp_sender import send_batch
+from auto_email.gmail_oauth import run_auth_flow
+from auto_email.mailer import send_batch
 from auto_email.sheets import append_rows, build_log_row
 from auto_email.models import Profile
 from auto_email.parser import parse_profiles
@@ -33,6 +34,9 @@ with st.sidebar:
         cfg["gmail_address"] = st.text_input("Gmail Address", value=cfg["gmail_address"])
         cfg["gmail_app_password"] = st.text_input(
             "Gmail App Password", value=cfg["gmail_app_password"], type="password"
+        )
+        st.caption(
+            "If using OAuth, Gmail App Password can be left blank."
         )
         cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
         template_value = st.session_state.get("email_template_field", cfg["email_template"])
@@ -63,6 +67,27 @@ with st.sidebar:
 5. Paste the Sheet ID and JSON key path above.
 """
             )
+
+        st.subheader("Gmail OAuth (Recommended for MIT)")
+        cfg["gmail_oauth_client_json"] = st.text_input(
+            "OAuth Client JSON Path", value=cfg.get("gmail_oauth_client_json", "")
+        )
+        default_token = os.path.join(
+            os.path.expanduser("~"), ".auto-email-sender", "gmail_token.json"
+        )
+        cfg["gmail_oauth_token_path"] = st.text_input(
+            "OAuth Token Path",
+            value=cfg.get("gmail_oauth_token_path") or default_token,
+        )
+        if st.form_submit_button("Authenticate Gmail (OAuth)"):
+            try:
+                run_auth_flow(
+                    cfg.get("gmail_oauth_client_json", ""),
+                    cfg.get("gmail_oauth_token_path", ""),
+                )
+                st.success("OAuth complete. Token saved.")
+            except Exception as exc:  # noqa: BLE001
+                st.warning(f"OAuth failed: {exc}")
 
         submitted = st.form_submit_button("Save Settings")
         if submitted:
@@ -298,7 +323,8 @@ with test_cols[1]:
 if send_test:
     with st.spinner("Sending..."):
         if not cfg.get("gmail_address") or not cfg.get("gmail_app_password"):
-            st.warning("Please set Gmail address and app password in Settings.")
+            if not cfg.get("gmail_oauth_token_path"):
+                st.warning("Please set Gmail address and app password in Settings.")
         elif not cfg.get("email_template"):
             st.warning("Please set an email template in Settings.")
         else:
