@@ -21,6 +21,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "sheet_col_company": "Company",
     "sheet_col_date": "Date (MM/DD)",
     "sheet_col_notes": "Notes",
+    "gmail_oauth_client_json": "",
+    "gmail_oauth_token_path": "",
     "saved_templates": [],
 }
 
