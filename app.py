@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import traceback
 import streamlit as st
 
 from auto_email.claude import parse_numbered_list
@@ -328,6 +329,11 @@ with sheet_cols[1]:
 
 if sheet_test:
     with st.spinner("Testing..."):
+        st.caption(f"Sheet ID: {cfg.get('google_sheet_id','')}")
+        json_path = cfg.get("google_service_account_json", "")
+        st.caption(f"Service account JSON path: {json_path}")
+        if json_path and not os.path.exists(json_path):
+            st.warning("Service account JSON path does not exist.")
         try:
             _ = fetch_existing_emails(
                 cfg.get("google_service_account_json", ""),
@@ -340,7 +346,6 @@ if sheet_test:
         except Exception as exc:  # noqa: BLE001
             st.warning(f"Google Sheets connection failed: {exc}")
             st.text_area("Error details", value=repr(exc), height=120)
-            json_path = cfg.get("google_service_account_json", "")
             if json_path and os.path.exists(json_path):
                 try:
                     with open(json_path, "r", encoding="utf-8") as f:
@@ -350,6 +355,7 @@ if sheet_test:
                         st.info(f"Service account email: {svc_email}")
                 except Exception:  # noqa: BLE001
                     pass
+            st.text_area("Traceback", value=traceback.format_exc(), height=200)
 
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
