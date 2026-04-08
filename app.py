@@ -260,7 +260,7 @@ if st.session_state["profiles"]:
             existing = fetch_existing_emails(
                 cfg.get("google_service_account_json", ""),
                 cfg.get("google_sheet_id", ""),
-                cfg.get("sheet_col_email", "Client Email"),
+                "Email of Client",
             )
             updated = []
             dup_count = 0

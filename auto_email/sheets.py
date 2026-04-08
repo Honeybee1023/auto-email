@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Dict, List
+import re
 
 import gspread
 
@@ -19,9 +20,13 @@ def fetch_existing_emails(
     rows = ws.get_all_records()
     existing: Dict[str, Dict[str, str]] = {}
     for row in rows:
-        email = str(row.get(email_column, "")).strip().lower()
-        if email:
-            existing[email] = row
+        raw = str(row.get(email_column, "")).strip().lower()
+        if not raw:
+            continue
+        parts = [p.strip() for p in re.split(r"[;,]", raw)]
+        for email in parts:
+            if email:
+                existing[email] = row
     return existing
 
 
