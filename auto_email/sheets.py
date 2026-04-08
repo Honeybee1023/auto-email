@@ -51,6 +51,9 @@ def append_rows(
     start_row = last_filled + 1
     if not rows:
         return
+    required_rows = start_row + len(rows) - 1
+    if required_rows > ws.row_count:
+        ws.resize(rows=required_rows)
     num_cols = max(len(r) for r in rows)
     end_row = start_row + len(rows) - 1
     start_cell = gspread.utils.rowcol_to_a1(start_row, 1)
