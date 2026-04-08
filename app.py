@@ -306,6 +306,17 @@ if st.session_state["profiles"]:
                 )
 
 st.subheader("6. Send")
+if st.button("Send Test Email to Myself"):
+    if not cfg.get("gmail_address") or not cfg.get("gmail_app_password"):
+        st.warning("Please set Gmail address and app password in Settings.")
+    elif not cfg.get("email_template"):
+        st.warning("Please set an email template in Settings.")
+    else:
+        test_subject = cfg.get("email_subject") or "Outreach"
+        test_body = cfg.get("email_template", "")
+        results = send_batch(cfg, [(cfg.get("gmail_address", ""), test_subject, test_body)])
+        st.session_state["send_results"] = results
+
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
         "I confirm all settings are correct and I want to send now."
