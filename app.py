@@ -1,3 +1,4 @@
+import json
 import os
 import time
 import streamlit as st
@@ -307,9 +308,13 @@ if send_test:
                 cfg, [(cfg.get("gmail_address", ""), test_subject, test_body)]
             )
             st.session_state["send_results"] = results
-            send_test_status.success("Sent!")
-            time.sleep(1)
-            send_test_status.empty()
+            test_result = results.get(cfg.get("gmail_address", ""), "")
+            if test_result == "sent":
+                send_test_status.success("Sent!")
+                time.sleep(1)
+                send_test_status.empty()
+            else:
+                st.warning(f"Test email failed: {test_result}")
 
 sheet_cols = st.columns([3, 1])
 with sheet_cols[0]:
@@ -331,6 +336,16 @@ if sheet_test:
         except Exception as exc:  # noqa: BLE001
             st.warning(f"Google Sheets connection failed: {exc}")
             st.text_area("Error details", value=repr(exc), height=120)
+            json_path = cfg.get("google_service_account_json", "")
+            if json_path and os.path.exists(json_path):
+                try:
+                    with open(json_path, "r", encoding="utf-8") as f:
+                        svc = json.load(f)
+                    svc_email = svc.get("client_email", "")
+                    if svc_email:
+                        st.info(f"Service account email: {svc_email}")
+                except Exception:  # noqa: BLE001
+                    pass
 
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
