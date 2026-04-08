@@ -1,4 +1,5 @@
 import os
+import time
 import streamlit as st
 
 from auto_email.claude import parse_numbered_list
@@ -287,27 +288,48 @@ if st.session_state["profiles"]:
                 )
 
 st.subheader("6. Send")
-if st.button("Send Test Email to Myself"):
-    if not cfg.get("gmail_address") or not cfg.get("gmail_app_password"):
-        st.warning("Please set Gmail address and app password in Settings.")
-    elif not cfg.get("email_template"):
-        st.warning("Please set an email template in Settings.")
-    else:
-        test_subject = cfg.get("email_subject") or "MIT Consulting Group x {company}"
-        test_body = cfg.get("email_template", "")
-        results = send_batch(cfg, [(cfg.get("gmail_address", ""), test_subject, test_body)])
-        st.session_state["send_results"] = results
+test_cols = st.columns([3, 1])
+with test_cols[0]:
+    send_test = st.button("Send Test Email to Myself")
+with test_cols[1]:
+    send_test_status = st.empty()
 
-if st.button("Test Google Sheets Connection"):
-    try:
-        _ = fetch_existing_emails(
-            cfg.get("google_service_account_json", ""),
-            cfg.get("google_sheet_id", ""),
-            cfg.get("sheet_col_email", "Email of Client"),
-        )
-        st.success("Google Sheets connection OK.")
-    except Exception as exc:  # noqa: BLE001
-        st.warning(f"Google Sheets connection failed: {exc}")
+if send_test:
+    with st.spinner("Sending..."):
+        if not cfg.get("gmail_address") or not cfg.get("gmail_app_password"):
+            st.warning("Please set Gmail address and app password in Settings.")
+        elif not cfg.get("email_template"):
+            st.warning("Please set an email template in Settings.")
+        else:
+            test_subject = cfg.get("email_subject") or "MIT Consulting Group x {company}"
+            test_body = cfg.get("email_template", "")
+            results = send_batch(
+                cfg, [(cfg.get("gmail_address", ""), test_subject, test_body)]
+            )
+            st.session_state["send_results"] = results
+            send_test_status.success("Sent!")
+            time.sleep(1)
+            send_test_status.empty()
+
+sheet_cols = st.columns([3, 1])
+with sheet_cols[0]:
+    sheet_test = st.button("Test Google Sheets Connection")
+with sheet_cols[1]:
+    sheet_test_status = st.empty()
+
+if sheet_test:
+    with st.spinner("Testing..."):
+        try:
+            _ = fetch_existing_emails(
+                cfg.get("google_service_account_json", ""),
+                cfg.get("google_sheet_id", ""),
+                cfg.get("sheet_col_email", "Email of Client"),
+            )
+            sheet_test_status.success("OK")
+            time.sleep(1)
+            sheet_test_status.empty()
+        except Exception as exc:  # noqa: BLE001
+            st.warning(f"Google Sheets connection failed: {exc}")
 
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
