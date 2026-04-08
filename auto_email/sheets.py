@@ -44,12 +44,14 @@ def append_rows(
 ) -> None:
     ws = _open_sheet(service_account_json, sheet_id)
     existing = ws.get_all_values()
-    last_filled = 0
+    start_row = None
     for i, row in enumerate(existing, start=1):
         email_cell = row[1].strip() if len(row) > 1 else ""
-        if email_cell:
-            last_filled = i
-    start_row = last_filled + 1
+        if not email_cell:
+            start_row = i
+            break
+    if start_row is None:
+        start_row = len(existing) + 1
     if not rows:
         return
     required_rows = start_row + len(rows) - 1
