@@ -37,14 +37,30 @@ def _infer_full_name(text: str) -> str:
     work_idx = text.find("Work Information")
     pre = text[:work_idx] if work_idx != -1 else text
     lines = [l.strip() for l in pre.splitlines() if l.strip()]
+    junk = {
+        "Alumni Directory",
+        "My Account",
+        "Name",
+        "Search",
+        "Back to Search Results",
+        "Load More",
+        "Work Information",
+        "Home Information",
+        "Personal Information",
+        "MIT Information",
+    }
+    lines = [l for l in lines if l not in junk]
     if not lines:
         return ""
     candidates = [
         l
         for l in lines
-        if re.search(r"'\d{2}", l) or re.search(r"\bPhD\b|\bMEng\b|\bSM\b|\bSB\b", l)
+        if re.search(r"'\d{2}", l) or re.search(r"\bPhD\b|\bMNG\b|\bMEng\b|\bSM\b|\bSB\b", l)
     ]
-    return candidates[-1] if candidates else lines[-1]
+    if candidates:
+        return candidates[-1]
+    titled = [l for l in lines if re.match(r"^(Mr\.|Ms\.|Mrs\.|Dr\.)\s+", l)]
+    return titled[-1] if titled else lines[-1]
 
 
 def _first_name(full_name: str) -> str:
@@ -67,8 +83,10 @@ def parse_profile(text: str) -> Optional[Profile]:
 
     email = _find_value_after_label(personal, "Email")
     company = _find_value_after_label(work, "Company")
-    job_title = _find_value_after_label(work, "Occupation") or _find_value_after_label(
-        work, "Title"
+    job_title = (
+        _find_value_after_label(work, "Job Title")
+        or _find_value_after_label(work, "Occupation")
+        or _find_value_after_label(work, "Title")
     )
 
     return Profile(
