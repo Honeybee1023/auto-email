@@ -32,18 +32,13 @@ def fetch_existing_emails(
 
 def build_log_row(sender_name: str, profile: Profile) -> List[str]:
     date_str = ""
-    notes_parts = [p for p in [profile.job_title, profile.mit_details] if p]
-    notes = "; ".join(notes_parts)
-    words = notes.split()
-    if len(words) > 10:
-        notes = " ".join(words[:10])
     return [
         sender_name,
         profile.email,
-        profile.full_name,
+        profile.first_name,
         profile.company,
         date_str,
-        notes,
+        "",
     ]
 
 
