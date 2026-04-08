@@ -46,7 +46,8 @@ def append_rows(
     existing = ws.get_all_values()
     last_filled = 0
     for i, row in enumerate(existing, start=1):
-        if any(cell.strip() for cell in row):
+        email_cell = row[1].strip() if len(row) > 1 else ""
+        if email_cell:
             last_filled = i
     start_row = last_filled + 1
     if not rows:
