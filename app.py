@@ -337,8 +337,15 @@ if st.session_state["profiles"]:
                 personalized_sentence=row.get("Personalized Sentence", ""),
             )
             body = render_email(cfg["email_template"], profile, cfg)
+            subject_template = cfg.get("email_subject") or "MIT Consulting Group x {company}"
+            subject = subject_template.format(company=profile.company)
             label = f"{profile.full_name or profile.email}"
             with st.expander(label):
+                st.text_input(
+                    "Email Subject",
+                    value=subject,
+                    key=f"email_subject_{idx}",
+                )
                 st.text_area(
                     "Email Body",
                     value=body,
