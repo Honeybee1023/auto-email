@@ -363,6 +363,25 @@ if sheet_test:
                     pass
             st.text_area("Traceback", value=traceback.format_exc(), height=200)
 
+if st.button("Test Google Sheets Write"):
+    try:
+        test_row = [
+            cfg.get("sender_name", ""),
+            cfg.get("gmail_address", ""),
+            "TEST ROW",
+            "TEST COMPANY",
+            time.strftime("%m/%d"),
+            "TEST WRITE - PLEASE DELETE",
+        ]
+        append_rows(
+            cfg.get("google_service_account_json", ""),
+            cfg.get("google_sheet_id", ""),
+            [test_row],
+        )
+        st.success("Test row written to sheet.")
+    except Exception as exc:  # noqa: BLE001
+        st.warning(f"Test write failed: {exc}")
+
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
         "I confirm all settings are correct and I want to send now."
