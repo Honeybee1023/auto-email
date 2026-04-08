@@ -355,6 +355,12 @@ if sheet_test:
                         st.info(f"Service account email: {svc_email}")
                 except Exception:  # noqa: BLE001
                     pass
+            resp = getattr(exc, "response", None)
+            if resp is not None:
+                try:
+                    st.text_area("API response", value=resp.text, height=120)
+                except Exception:  # noqa: BLE001
+                    pass
             st.text_area("Traceback", value=traceback.format_exc(), height=200)
 
 if st.session_state["profiles"]:
