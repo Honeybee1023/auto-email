@@ -464,25 +464,29 @@ if st.session_state["profiles"]:
             messages = []
             email_to_profile = {}
             for idx, row in enumerate(st.session_state["profiles"]):
-            to_addr = row.get("Email", "")
-            body = st.session_state.get(f"email_body_{idx}", "")
-            if to_addr and body:
-                profile = Profile(
-                    first_name=row.get("First Name", ""),
-                    full_name=row.get("Full Name", ""),
-                    email=row.get("Email", ""),
-                    company=row.get("Company", ""),
-                    job_title=row.get("Job Title", ""),
-                    mit_details=row.get("MIT Details", ""),
-                    personalized_sentence=row.get("Personalized Sentence", ""),
-                )
-                email_to_profile[to_addr] = profile
-                if not profile.company:
-                    st.warning(f"Missing company for {to_addr}. Please fill it in.")
-                    continue
-                subject_template = cfg.get("email_subject") or "MIT Consulting Group x {company}"
-                subject = subject_template.format(company=profile.company)
-                messages.append((to_addr, subject, body))
+                to_addr = row.get("Email", "")
+                body = st.session_state.get(f"email_body_{idx}", "")
+                if to_addr and body:
+                    profile = Profile(
+                        first_name=row.get("First Name", ""),
+                        full_name=row.get("Full Name", ""),
+                        email=row.get("Email", ""),
+                        company=row.get("Company", ""),
+                        job_title=row.get("Job Title", ""),
+                        mit_details=row.get("MIT Details", ""),
+                        personalized_sentence=row.get("Personalized Sentence", ""),
+                    )
+                    email_to_profile[to_addr] = profile
+                    if not profile.company:
+                        st.warning(
+                            f"Missing company for {to_addr}. Please fill it in."
+                        )
+                        continue
+                    subject_template = (
+                        cfg.get("email_subject") or "MIT Consulting Group x {company}"
+                    )
+                    subject = subject_template.format(company=profile.company)
+                    messages.append((to_addr, subject, body))
             results = send_batch(cfg, messages)
             st.session_state["send_results"] = results
 
