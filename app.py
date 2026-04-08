@@ -298,6 +298,17 @@ if st.button("Send Test Email to Myself"):
         results = send_batch(cfg, [(cfg.get("gmail_address", ""), test_subject, test_body)])
         st.session_state["send_results"] = results
 
+if st.button("Test Google Sheets Connection"):
+    try:
+        _ = fetch_existing_emails(
+            cfg.get("google_service_account_json", ""),
+            cfg.get("google_sheet_id", ""),
+            cfg.get("sheet_col_email", "Email of Client"),
+        )
+        st.success("Google Sheets connection OK.")
+    except Exception as exc:  # noqa: BLE001
+        st.warning(f"Google Sheets connection failed: {exc}")
+
 if st.session_state["profiles"]:
     confirm_send = st.checkbox(
         "I confirm all settings are correct and I want to send now."
