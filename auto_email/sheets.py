@@ -43,4 +43,16 @@ def append_rows(
     service_account_json: str, sheet_id: str, rows: List[List[str]]
 ) -> None:
     ws = _open_sheet(service_account_json, sheet_id)
-    ws.append_rows(rows, value_input_option="USER_ENTERED")
+    existing = ws.get_all_values()
+    last_filled = 0
+    for i, row in enumerate(existing, start=1):
+        if any(cell.strip() for cell in row):
+            last_filled = i
+    start_row = last_filled + 1
+    if not rows:
+        return
+    num_cols = max(len(r) for r in rows)
+    end_row = start_row + len(rows) - 1
+    start_cell = gspread.utils.rowcol_to_a1(start_row, 1)
+    end_cell = gspread.utils.rowcol_to_a1(end_row, num_cols)
+    ws.update(f"{start_cell}:{end_cell}", rows, value_input_option="USER_ENTERED")
