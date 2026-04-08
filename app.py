@@ -454,10 +454,16 @@ if st.session_state["profiles"]:
         "I confirm all settings are correct and I want to send now."
     )
     send_disabled = not (confirm_send and ready_to_send)
-    if st.button("Send All", disabled=send_disabled):
-        messages = []
-        email_to_profile = {}
-        for idx, row in enumerate(st.session_state["profiles"]):
+    send_cols = st.columns([3, 1])
+    with send_cols[0]:
+        send_clicked = st.button("Send All", disabled=send_disabled)
+    with send_cols[1]:
+        send_status = st.empty()
+    if send_clicked:
+        with st.spinner("Sending..."):
+            messages = []
+            email_to_profile = {}
+            for idx, row in enumerate(st.session_state["profiles"]):
             to_addr = row.get("Email", "")
             body = st.session_state.get(f"email_body_{idx}", "")
             if to_addr and body:
@@ -477,8 +483,8 @@ if st.session_state["profiles"]:
                 subject_template = cfg.get("email_subject") or "MIT Consulting Group x {company}"
                 subject = subject_template.format(company=profile.company)
                 messages.append((to_addr, subject, body))
-        results = send_batch(cfg, messages)
-        st.session_state["send_results"] = results
+            results = send_batch(cfg, messages)
+            st.session_state["send_results"] = results
 
         try:
             rows = [
@@ -494,9 +500,12 @@ if st.session_state["profiles"]:
                 )
                 st.success("Logged sent emails to Google Sheets.")
         except Exception as exc:  # noqa: BLE001
-            st.warning(f"Could not write to Google Sheet: {exc}")
-            if rows:
-                st.text_area("Rows to add manually", value=str(rows), height=150)
+                st.warning(f"Could not write to Google Sheet: {exc}")
+                if rows:
+                    st.text_area("Rows to add manually", value=str(rows), height=150)
+        send_status.success("Sent!")
+        time.sleep(1)
+        send_status.empty()
 
     if st.session_state.get("send_results"):
         st.write("Send results:")
