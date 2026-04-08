@@ -25,12 +25,11 @@ def send_email(
 
 def send_batch(
     cfg: Dict[str, str],
-    messages: Iterable[Tuple[str, str]],
-    subject: str,
+    messages: Iterable[Tuple[str, str, str]],
     delay_seconds: float = 2.0,
 ) -> Dict[str, str]:
     results: Dict[str, str] = {}
-    for to_addr, body in messages:
+    for to_addr, subject, body in messages:
         ok, err = send_email(cfg, to_addr, subject, body)
         results[to_addr] = "sent" if ok else err
         time.sleep(delay_seconds)

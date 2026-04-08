@@ -10,7 +10,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "gmail_app_password": "",
     "sender_name": "",
     "sender_intro": "",
-    "email_subject": "Potential Collaboration",
+    "email_subject": "MIT Consulting Group x {company}",
     "availability": "",
     "email_template": "",
     "google_sheet_id": "",

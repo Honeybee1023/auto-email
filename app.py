@@ -318,7 +318,7 @@ if st.session_state["profiles"]:
             to_addr = row.get("Email", "")
             body = st.session_state.get(f"email_body_{idx}", "")
             if to_addr and body:
-                email_to_profile[to_addr] = Profile(
+                profile = Profile(
                     first_name=row.get("First Name", ""),
                     full_name=row.get("Full Name", ""),
                     email=row.get("Email", ""),
@@ -327,9 +327,11 @@ if st.session_state["profiles"]:
                     mit_details=row.get("MIT Details", ""),
                     personalized_sentence=row.get("Personalized Sentence", ""),
                 )
-                messages.append((to_addr, body))
-        subject = cfg.get("email_subject") or "Outreach"
-        results = send_batch(cfg, messages, subject=subject)
+                email_to_profile[to_addr] = profile
+                subject_template = cfg.get("email_subject") or "Outreach"
+                subject = subject_template.format(company=profile.company)
+                messages.append((to_addr, subject, body))
+        results = send_batch(cfg, messages)
         st.session_state["send_results"] = results
 
         try:
