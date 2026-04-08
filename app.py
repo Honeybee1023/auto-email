@@ -68,27 +68,6 @@ with st.sidebar:
 """
             )
 
-        st.subheader("Gmail OAuth (Recommended for MIT)")
-        cfg["gmail_oauth_client_json"] = st.text_input(
-            "OAuth Client JSON Path", value=cfg.get("gmail_oauth_client_json", "")
-        )
-        default_token = os.path.join(
-            os.path.expanduser("~"), ".auto-email-sender", "gmail_token.json"
-        )
-        cfg["gmail_oauth_token_path"] = st.text_input(
-            "OAuth Token Path",
-            value=cfg.get("gmail_oauth_token_path") or default_token,
-        )
-        if st.form_submit_button("Authenticate Gmail (OAuth)"):
-            try:
-                run_auth_flow(
-                    cfg.get("gmail_oauth_client_json", ""),
-                    cfg.get("gmail_oauth_token_path", ""),
-                )
-                st.success("OAuth complete. Token saved.")
-            except Exception as exc:  # noqa: BLE001
-                st.warning(f"OAuth failed: {exc}")
-
         submitted = st.form_submit_button("Save Settings")
         if submitted:
             template_body = cfg.get("email_template", "").strip()
@@ -323,8 +302,7 @@ with test_cols[1]:
 if send_test:
     with st.spinner("Sending..."):
         if not cfg.get("gmail_address") or not cfg.get("gmail_app_password"):
-            if not cfg.get("gmail_oauth_token_path"):
-                st.warning("Please set Gmail address and app password in Settings.")
+            st.warning("Please set Gmail address and app password in Settings.")
         elif not cfg.get("email_template"):
             st.warning("Please set an email template in Settings.")
         else:
