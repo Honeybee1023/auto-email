@@ -32,6 +32,41 @@ def _collect_draft() -> dict:
         "edited_bodies": edited_bodies,
     }
 
+
+def _refresh_profiles_from_raw() -> None:
+    raw = st.session_state.get("raw_profiles", "")
+    if raw == st.session_state.get("last_raw_profiles", ""):
+        return
+    parsed = parse_profiles(raw)
+    if not parsed and raw.strip():
+        st.session_state["profiles"] = [
+            {
+                "First Name": "",
+                "Full Name": "",
+                "Email": "",
+                "Company": "",
+                "Job Title": "",
+                "MIT Details": "",
+                "Personalized Sentence": "",
+            }
+        ]
+        st.session_state["parse_error_raw"] = raw
+    else:
+        st.session_state["profiles"] = [
+            {
+                "First Name": p.first_name,
+                "Full Name": p.full_name,
+                "Email": p.email,
+                "Company": p.company,
+                "Job Title": p.job_title,
+                "MIT Details": p.mit_details,
+                "Personalized Sentence": p.personalized_sentence,
+            }
+            for p in parsed
+        ]
+        st.session_state["parse_error_raw"] = ""
+    st.session_state["last_raw_profiles"] = raw
+
 st.title("Auto Email Sender")
 
 cfg = load_config()
@@ -196,34 +231,7 @@ if "profiles" not in st.session_state:
 st.subheader("1. Paste Profiles")
 raw = st.text_area("Paste raw alumni profiles here", height=200, key="raw_profiles")
 if st.button("Parse Profiles"):
-    parsed = parse_profiles(raw)
-    if not parsed and raw.strip():
-        st.session_state["profiles"] = [
-            {
-                "First Name": "",
-                "Full Name": "",
-                "Email": "",
-                "Company": "",
-                "Job Title": "",
-                "MIT Details": "",
-                "Personalized Sentence": "",
-            }
-        ]
-        st.session_state["parse_error_raw"] = raw
-    else:
-        st.session_state["profiles"] = [
-            {
-                "First Name": p.first_name,
-                "Full Name": p.full_name,
-                "Email": p.email,
-                "Company": p.company,
-                "Job Title": p.job_title,
-                "MIT Details": p.mit_details,
-                "Personalized Sentence": p.personalized_sentence,
-            }
-            for p in parsed
-        ]
-        st.session_state["parse_error_raw"] = ""
+    _refresh_profiles_from_raw()
 
 st.subheader("2. Review Parsed Data")
 if st.session_state["profiles"]:
@@ -269,6 +277,7 @@ else:
 st.subheader("3. Duplicate Check (Google Sheets)")
 if st.session_state["profiles"]:
     if st.button("Check Duplicates"):
+        _refresh_profiles_from_raw()
         try:
             existing = fetch_existing_emails(
                 cfg.get("google_service_account_json", ""),
@@ -299,12 +308,14 @@ if st.session_state["profiles"]:
                 )
             else:
                 st.success("Duplicate check complete: no duplicates found.")
+            st.rerun()
         except Exception as exc:  # noqa: BLE001
             st.warning(f"Could not read Google Sheet: {exc}")
 
 st.subheader("4. Generate Personalization")
 if st.session_state["profiles"]:
     if st.button("Generate Claude Prompt"):
+        _refresh_profiles_from_raw()
         profiles = [
             Profile(
                 first_name=row.get("First Name", ""),
@@ -323,6 +334,7 @@ if st.session_state["profiles"]:
     st.text_area("Claude Prompt (copy/paste)", value=prompt_value, height=200)
     response = st.text_area("Paste Claude Response Here", height=200, key="claude_response")
     if st.button("Apply Personalization"):
+        _refresh_profiles_from_raw()
         parsed = parse_numbered_list(response, len(st.session_state["profiles"]))
         if not parsed:
             st.warning("Could not parse response. Please ensure the list matches the profile count.")
@@ -471,6 +483,7 @@ if st.session_state["profiles"]:
         send_status = st.empty()
     if send_clicked:
         with st.spinner("Sending..."):
+            _refresh_profiles_from_raw()
             messages = []
             email_to_profile = {}
             for idx, row in enumerate(st.session_state["profiles"]):
