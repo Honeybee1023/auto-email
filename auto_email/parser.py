@@ -64,7 +64,9 @@ def _infer_full_name(text: str) -> str:
 
 
 def _strip_degrees(name_line: str) -> str:
-    return re.split(r"\s+(?:'\d{2}|[A-Z]{2,4}|PhD)\b", name_line)[0].strip()
+    return re.split(
+        r"\s+(?:'\d{2}|MNG|MEng|SM|SB|PhD|MBA|PD)\b", name_line
+    )[0].strip()
 
 
 def _first_name(full_name: str) -> str:
@@ -110,7 +112,7 @@ def parse_profiles(raw_text: str) -> List[Profile]:
     lines = raw_text.splitlines()
     name_pattern = re.compile(
         r"^(Mr\.|Ms\.|Mrs\.|Dr\.)?\s*[A-Z][A-Za-z\.\-']+(?:\s+[A-Z][A-Za-z\.\-']+)*\s+"
-        r"(?:'\d{2}|[A-Z]{2,4}|PhD)\b"
+        r"(?:'\d{2}|MNG|MEng|SM|SB|PhD|MBA|PD)\b"
     )
 
     name_indices: List[Tuple[int, str]] = []
