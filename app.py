@@ -67,6 +67,35 @@ def _refresh_profiles_from_raw() -> None:
         st.session_state["parse_error_raw"] = ""
     st.session_state["last_raw_profiles"] = raw
 
+
+def _clear_preview_state() -> None:
+    for key in list(st.session_state.keys()):
+        if key.startswith("email_body_") or key.startswith("email_subject_"):
+            del st.session_state[key]
+
+
+def _preview_signature(cfg: dict, profiles: list[dict]) -> str:
+    render_inputs = {
+        "template": cfg.get("email_template", ""),
+        "subject": cfg.get("email_subject", ""),
+        "availability": cfg.get("availability", ""),
+        "sender_name": cfg.get("sender_name", ""),
+        "sender_intro": cfg.get("sender_intro", ""),
+        "profiles": [
+            {
+                "first_name": str(row.get("First Name", "")),
+                "full_name": str(row.get("Full Name", "")),
+                "email": str(row.get("Email", "")).strip().lower(),
+                "company": str(row.get("Company", "")),
+                "job_title": str(row.get("Job Title", "")),
+                "mit_details": str(row.get("MIT Details", "")),
+                "personalized_sentence": str(row.get("Personalized Sentence", "")),
+            }
+            for row in profiles
+        ],
+    }
+    return json.dumps(render_inputs, sort_keys=True)
+
 st.title("Auto Email Sender")
 
 cfg = load_config()
@@ -283,21 +312,13 @@ if st.session_state["profiles"]:
         st.info(f"Removed {dupes} duplicate rows by email.")
         st.session_state["profiles"] = deduped
 
-    current_sig = [
-        (
-            str(r.get("Email", "")).strip().lower(),
-            str(r.get("Personalized Sentence", "")).strip(),
-        )
-        for r in st.session_state["profiles"]
-    ]
-    if st.session_state.get("profiles_sig") != current_sig:
-        for key in list(st.session_state.keys()):
-            if key.startswith("email_body_") or key.startswith("email_subject_"):
-                del st.session_state[key]
-        st.session_state["profiles_sig"] = current_sig
     st.session_state["profiles"] = st.data_editor(
         st.session_state["profiles"], num_rows="dynamic", use_container_width=True
     )
+    current_preview_sig = _preview_signature(cfg, st.session_state["profiles"])
+    if st.session_state.get("preview_sig") != current_preview_sig:
+        _clear_preview_state()
+        st.session_state["preview_sig"] = current_preview_sig
     if st.session_state.get("parse_error_raw"):
         st.text_area(
             "Raw text (parsing failed; please fill fields manually)",
@@ -382,9 +403,8 @@ if st.session_state["profiles"]:
 st.subheader("5. Preview Emails")
 if st.session_state["profiles"]:
     if st.button("Refresh Previews"):
-        for key in list(st.session_state.keys()):
-            if key.startswith("email_body_") or key.startswith("email_subject_"):
-                del st.session_state[key]
+        _clear_preview_state()
+        st.session_state["preview_sig"] = _preview_signature(cfg, st.session_state["profiles"])
     if not cfg.get("email_template"):
         st.info("Add an email template in Settings to preview emails.")
     else:
@@ -535,6 +555,12 @@ if st.session_state["profiles"]:
     if send_clicked:
         with st.spinner("Sending..." if mode == "send" else "Creating drafts..."):
             _refresh_profiles_from_raw()
+            current_preview_sig = _preview_signature(cfg, st.session_state["profiles"])
+            if st.session_state.get("preview_sig") != current_preview_sig:
+                _clear_preview_state()
+                st.session_state["preview_sig"] = current_preview_sig
+                st.warning("Previews changed after upstream updates. Review them again before sending.")
+                st.rerun()
             messages = []
             email_to_profile = {}
             for idx, row in enumerate(st.session_state["profiles"]):
