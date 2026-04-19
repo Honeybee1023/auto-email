@@ -25,6 +25,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "sheet_col_notes": "Notes",
     "gmail_oauth_client_json": "",
     "gmail_oauth_token_path": "",
+    "delivery_mode": "send",
     "saved_templates": [],
 }
 

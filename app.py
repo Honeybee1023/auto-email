@@ -9,7 +9,7 @@ from auto_email.config import load_config, save_config
 from auto_email.draft import clear_draft, load_draft, save_draft
 from auto_email.email import render_email
 from auto_email.gmail_oauth import run_auth_flow
-from auto_email.mailer import send_batch
+from auto_email.mailer import create_draft_batch, send_batch
 from auto_email.sheets import append_rows, build_log_row
 from auto_email.models import Profile
 from auto_email.parser import parse_profiles
@@ -103,9 +103,7 @@ with st.sidebar:
         cfg["gmail_app_password"] = st.text_input(
             "Gmail App Password", value=cfg["gmail_app_password"], type="password"
         )
-        st.caption(
-            "If using OAuth, Gmail App Password can be left blank."
-        )
+        st.caption("For Draft Mode, Gmail OAuth is required. For Send Mode, SMTP is used.")
         cfg["sender_name"] = st.text_input("Sender Name (full)", value=cfg["sender_name"])
         template_value = st.session_state.get("email_template_field", cfg["email_template"])
         cfg["email_template"] = template_value
@@ -128,6 +126,17 @@ with st.sidebar:
             "Email Subject (optional)", value=cfg["email_subject"]
         )
         cfg["availability"] = st.text_area("Availability", value=cfg["availability"])
+        st.subheader("Gmail Draft OAuth")
+        cfg["gmail_oauth_client_json"] = st.text_input(
+            "OAuth Client JSON Path", value=cfg.get("gmail_oauth_client_json", "")
+        )
+        default_token = os.path.join(
+            os.path.expanduser("~"), ".auto-email-sender", "gmail_token.json"
+        )
+        cfg["gmail_oauth_token_path"] = st.text_input(
+            "OAuth Token Path",
+            value=cfg.get("gmail_oauth_token_path") or default_token,
+        )
 
         st.caption("Do not share your Gmail App Password or service account key file.")
 
@@ -141,6 +150,17 @@ with st.sidebar:
 5. Paste the Sheet ID and JSON key path above.
 """
             )
+
+        if st.form_submit_button("Connect Gmail For Drafts"):
+            try:
+                run_auth_flow(
+                    cfg.get("gmail_oauth_client_json", ""),
+                    cfg.get("gmail_oauth_token_path", ""),
+                )
+                save_config(cfg)
+                st.success("Gmail OAuth connected for draft creation.")
+            except Exception as exc:  # noqa: BLE001
+                st.warning(f"Gmail OAuth failed: {exc}")
 
         submitted = st.form_submit_button("Save Settings")
         if submitted:
@@ -156,11 +176,18 @@ with st.sidebar:
             st.success("Settings saved.")
 
     st.subheader("Status")
+    active_mode = cfg.get("delivery_mode", "send")
     missing = []
     if not cfg.get("gmail_address"):
         missing.append("Gmail Address")
-    if not cfg.get("gmail_app_password"):
+    if active_mode == "send" and not cfg.get("gmail_app_password"):
         missing.append("Gmail App Password")
+    oauth_token_path = cfg.get("gmail_oauth_token_path", "")
+    if active_mode == "draft":
+        if not oauth_token_path:
+            missing.append("Gmail OAuth Token Path")
+        elif not os.path.exists(oauth_token_path):
+            missing.append("Gmail OAuth token file (connect Gmail for drafts)")
     if not cfg.get("sender_name"):
         missing.append("Sender Name")
     if not cfg.get("email_template"):
@@ -389,6 +416,21 @@ if st.session_state["profiles"]:
                 )
 
 st.subheader("6. Send")
+mode = st.radio(
+    "Delivery Mode",
+    options=["send", "draft"],
+    index=0 if cfg.get("delivery_mode", "send") == "send" else 1,
+    format_func=lambda x: "Send Now" if x == "send" else "Create Gmail Drafts",
+    horizontal=True,
+)
+if mode != cfg.get("delivery_mode", "send"):
+    cfg["delivery_mode"] = mode
+    save_config(cfg)
+if mode == "send":
+    st.info("Send Mode: emails are sent immediately and successful sends are logged to Google Sheets.")
+else:
+    st.warning("Draft Mode: Gmail drafts are created and successful draft creations are logged to Google Sheets.")
+
 test_cols = st.columns([3, 1])
 with test_cols[0]:
     send_test = st.button("Send Test Email to Myself")
@@ -484,11 +526,14 @@ if st.session_state["profiles"]:
     send_disabled = not (confirm_send and ready_to_send)
     send_cols = st.columns([3, 1])
     with send_cols[0]:
-        send_clicked = st.button("Send All", disabled=send_disabled)
+        send_clicked = st.button(
+            "Send All" if mode == "send" else "Create Gmail Drafts",
+            disabled=send_disabled,
+        )
     with send_cols[1]:
         send_status = st.empty()
     if send_clicked:
-        with st.spinner("Sending..."):
+        with st.spinner("Sending..." if mode == "send" else "Creating drafts..."):
             _refresh_profiles_from_raw()
             messages = []
             email_to_profile = {}
@@ -516,27 +561,39 @@ if st.session_state["profiles"]:
                     )
                     subject = subject_template.format(company=profile.company)
                     messages.append((to_addr, subject, body))
-            results = send_batch(cfg, messages)
+            if mode == "send":
+                results = send_batch(cfg, messages)
+            else:
+                results = create_draft_batch(cfg, messages)
             st.session_state["send_results"] = results
 
         try:
-            rows = [
-                build_log_row(cfg.get("sender_name", ""), email_to_profile[email])
-                for email, status in results.items()
-                if status == "sent"
-            ]
+            if "__error__" in results:
+                st.warning(results["__error__"])
+                rows = []
+            else:
+                success_statuses = {"sent"} if mode == "send" else {"drafted"}
+                rows = [
+                    build_log_row(cfg.get("sender_name", ""), email_to_profile[email])
+                    for email, status in results.items()
+                    if status in success_statuses or status.startswith("draft:")
+                ]
             if rows:
                 append_rows(
                     cfg.get("google_service_account_json", ""),
                     cfg.get("google_sheet_id", ""),
                     rows,
                 )
-                st.success("Logged sent emails to Google Sheets.")
+                st.success(
+                    "Logged emails to Google Sheets."
+                    if mode == "send"
+                    else "Logged drafted emails to Google Sheets."
+                )
         except Exception as exc:  # noqa: BLE001
-                st.warning(f"Could not write to Google Sheet: {exc}")
-                if rows:
-                    st.text_area("Rows to add manually", value=str(rows), height=150)
-        send_status.success("Sent!")
+            st.warning(f"Could not write to Google Sheet: {exc}")
+            if rows:
+                st.text_area("Rows to add manually", value=str(rows), height=150)
+        send_status.success("Sent!" if mode == "send" else "Drafted!")
         time.sleep(1)
         send_status.empty()
 

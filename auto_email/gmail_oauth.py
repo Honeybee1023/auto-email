@@ -1,5 +1,4 @@
 import base64
-import json
 import os
 from email.message import EmailMessage
 from typing import Optional
@@ -9,7 +8,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+SCOPES = ["https://www.googleapis.com/auth/gmail.compose"]
 
 
 def load_creds(token_path: str) -> Optional[Credentials]:
@@ -41,6 +40,41 @@ def send_gmail_message(
     reply_to: str = "",
     archive_bcc: str = "",
 ) -> None:
+    message = _build_message(sender, to_addr, subject, body, reply_to, archive_bcc)
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+    service = build("gmail", "v1", credentials=creds)
+    service.users().messages().send(userId="me", body={"raw": raw}).execute()
+
+
+def create_gmail_draft(
+    creds: Credentials,
+    sender: str,
+    to_addr: str,
+    subject: str,
+    body: str,
+    reply_to: str = "",
+    archive_bcc: str = "",
+) -> str:
+    message = _build_message(sender, to_addr, subject, body, reply_to, archive_bcc)
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+    service = build("gmail", "v1", credentials=creds)
+    draft = (
+        service.users()
+        .drafts()
+        .create(userId="me", body={"message": {"raw": raw}})
+        .execute()
+    )
+    return draft.get("id", "")
+
+
+def _build_message(
+    sender: str,
+    to_addr: str,
+    subject: str,
+    body: str,
+    reply_to: str = "",
+    archive_bcc: str = "",
+) -> EmailMessage:
     message = EmailMessage()
     message["From"] = sender
     message["To"] = to_addr
@@ -50,7 +84,4 @@ def send_gmail_message(
     if archive_bcc:
         message["Bcc"] = archive_bcc
     message.set_content(body)
-
-    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
-    service = build("gmail", "v1", credentials=creds)
-    service.users().messages().send(userId="me", body={"raw": raw}).execute()
+    return message
