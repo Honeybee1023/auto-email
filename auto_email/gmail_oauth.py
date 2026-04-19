@@ -33,12 +33,22 @@ def run_auth_flow(client_secret_path: str, token_path: str) -> Credentials:
 
 
 def send_gmail_message(
-    creds: Credentials, sender: str, to_addr: str, subject: str, body: str
+    creds: Credentials,
+    sender: str,
+    to_addr: str,
+    subject: str,
+    body: str,
+    reply_to: str = "",
+    archive_bcc: str = "",
 ) -> None:
     message = EmailMessage()
     message["From"] = sender
     message["To"] = to_addr
     message["Subject"] = subject
+    if reply_to:
+        message["Reply-To"] = reply_to
+    if archive_bcc:
+        message["Bcc"] = archive_bcc
     message.set_content(body)
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")

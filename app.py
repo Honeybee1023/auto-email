@@ -117,6 +117,12 @@ with st.sidebar:
         )
 
         st.subheader("Optional Settings")
+        cfg["archive_bcc_email"] = st.text_input(
+            "Archive Copy Email (BCC)", value=cfg.get("archive_bcc_email", "")
+        )
+        cfg["reply_to_email"] = st.text_input(
+            "Reply-To Email", value=cfg.get("reply_to_email", "")
+        )
         cfg["sender_intro"] = st.text_area("Sender Intro", value=cfg["sender_intro"])
         cfg["email_subject"] = st.text_input(
             "Email Subject (optional)", value=cfg["email_subject"]

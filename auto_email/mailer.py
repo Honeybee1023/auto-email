@@ -10,13 +10,23 @@ def send_batch(
 ) -> Dict[str, str]:
     token_path = cfg.get("gmail_oauth_token_path", "")
     gmail_address = cfg.get("gmail_address", "")
+    reply_to = cfg.get("reply_to_email", "").strip()
+    archive_bcc = cfg.get("archive_bcc_email", "").strip()
     creds = load_creds(token_path) if token_path else None
 
     if creds:
         results: Dict[str, str] = {}
         for to_addr, subject, body in messages:
             try:
-                send_gmail_message(creds, gmail_address, to_addr, subject, body)
+                send_gmail_message(
+                    creds,
+                    gmail_address,
+                    to_addr,
+                    subject,
+                    body,
+                    reply_to=reply_to,
+                    archive_bcc=archive_bcc,
+                )
                 results[to_addr] = "sent"
             except Exception as exc:  # noqa: BLE001
                 results[to_addr] = str(exc)

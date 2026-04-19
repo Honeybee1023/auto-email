@@ -1,6 +1,8 @@
 {
   "gmail_address": "your.email@example.com",
   "gmail_app_password": "your_app_password",
+  "archive_bcc_email": "archive@example.com",
+  "reply_to_email": "your.mit.email@example.edu",
   "sender_name": "Your Name",
   "sender_intro": "I'm on the partnerships team and would love to connect.",
   "email_subject": "MIT Consulting Group x {company}",

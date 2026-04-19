@@ -8,6 +8,8 @@ CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 DEFAULT_CONFIG: Dict[str, Any] = {
     "gmail_address": "",
     "gmail_app_password": "",
+    "archive_bcc_email": "",
+    "reply_to_email": "",
     "sender_name": "",
     "sender_intro": "",
     "email_subject": "MIT Consulting Group x {company}",

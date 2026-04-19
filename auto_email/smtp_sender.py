@@ -11,6 +11,12 @@ def send_email(
     msg["From"] = cfg.get("gmail_address", "")
     msg["To"] = to_addr
     msg["Subject"] = subject
+    reply_to = cfg.get("reply_to_email", "").strip()
+    archive_bcc = cfg.get("archive_bcc_email", "").strip()
+    if reply_to:
+        msg["Reply-To"] = reply_to
+    if archive_bcc:
+        msg["Bcc"] = archive_bcc
     msg.set_content(body)
 
     try:
