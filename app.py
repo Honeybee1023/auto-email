@@ -74,6 +74,16 @@ def _clear_preview_state() -> None:
             del st.session_state[key]
 
 
+def _profile_row_key(row: dict) -> str:
+    email = str(row.get("Email", "")).strip().lower()
+    if email:
+        return email
+    full_name = str(row.get("Full Name", "")).strip().lower()
+    company = str(row.get("Company", "")).strip().lower()
+    first_name = str(row.get("First Name", "")).strip().lower()
+    return "|".join([full_name, first_name, company])
+
+
 def _preview_signature(cfg: dict, profiles: list[dict]) -> str:
     render_inputs = {
         "template": cfg.get("email_template", ""),
@@ -408,7 +418,7 @@ if st.session_state["profiles"]:
     if not cfg.get("email_template"):
         st.info("Add an email template in Settings to preview emails.")
     else:
-        for idx, row in enumerate(st.session_state["profiles"]):
+        for row in st.session_state["profiles"]:
             profile = Profile(
                 first_name=row.get("First Name", ""),
                 full_name=row.get("Full Name", ""),
@@ -422,17 +432,18 @@ if st.session_state["profiles"]:
             subject_template = cfg.get("email_subject") or "MIT Consulting Group x {company}"
             subject = subject_template.format(company=profile.company)
             label = f"{profile.full_name or profile.email}"
+            row_key = _profile_row_key(row)
             with st.expander(label):
                 st.text_input(
                     "Email Subject",
                     value=subject,
-                    key=f"email_subject_{idx}",
+                    key=f"email_subject_{row_key}",
                 )
                 st.text_area(
                     "Email Body",
                     value=body,
                     height=250,
-                    key=f"email_body_{idx}",
+                    key=f"email_body_{row_key}",
                 )
 
 st.subheader("6. Send")
@@ -563,9 +574,10 @@ if st.session_state["profiles"]:
                 st.rerun()
             messages = []
             email_to_profile = {}
-            for idx, row in enumerate(st.session_state["profiles"]):
+            for row in st.session_state["profiles"]:
                 to_addr = row.get("Email", "")
-                body = st.session_state.get(f"email_body_{idx}", "")
+                row_key = _profile_row_key(row)
+                body = st.session_state.get(f"email_body_{row_key}", "")
                 if to_addr and body:
                     profile = Profile(
                         first_name=row.get("First Name", ""),
