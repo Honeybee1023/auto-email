@@ -1,7 +1,18 @@
 from typing import Dict, Iterable, Tuple
 
+from google.auth.exceptions import RefreshError
+
 from auto_email.gmail_oauth import create_gmail_draft, load_creds, send_gmail_message
 from auto_email.smtp_sender import send_batch as send_batch_smtp
+
+
+def _load_gmail_creds(token_path: str):
+    if not token_path:
+        return None, None
+    try:
+        return load_creds(token_path), None
+    except RefreshError as exc:
+        return None, exc
 
 
 def send_batch(
@@ -12,7 +23,7 @@ def send_batch(
     gmail_address = cfg.get("gmail_address", "")
     reply_to = cfg.get("reply_to_email", "").strip()
     archive_bcc = cfg.get("archive_bcc_email", "").strip()
-    creds = load_creds(token_path) if token_path else None
+    creds, auth_error = _load_gmail_creds(token_path)
 
     if creds:
         results: Dict[str, str] = {}
@@ -32,6 +43,9 @@ def send_batch(
                 results[to_addr] = str(exc)
         return results
 
+    if auth_error:
+        return send_batch_smtp(cfg, messages)
+
     return send_batch_smtp(cfg, messages)
 
 
@@ -43,9 +57,16 @@ def create_draft_batch(
     gmail_address = cfg.get("gmail_address", "")
     reply_to = cfg.get("reply_to_email", "").strip()
     archive_bcc = cfg.get("archive_bcc_email", "").strip()
-    creds = load_creds(token_path) if token_path else None
+    creds, auth_error = _load_gmail_creds(token_path)
 
     if not creds:
+        if auth_error:
+            return {
+                "__error__": (
+                    "Gmail OAuth token expired or was revoked. "
+                    "Reconnect Gmail for drafts."
+                )
+            }
         return {"__error__": "Gmail OAuth is not connected."}
 
     results: Dict[str, str] = {}
