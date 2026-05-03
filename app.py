@@ -7,9 +7,14 @@ import streamlit as st
 from auto_email.claude import parse_numbered_list
 from auto_email.config import load_config, save_config
 from auto_email.draft import clear_draft, load_draft, save_draft
-from auto_email.email import render_email
 from auto_email.gmail_oauth import run_auth_flow
 from auto_email.mailer import create_draft_batch, send_batch
+from auto_email.preview import (
+    build_preview_entries,
+    preview_signature,
+    preview_state_values,
+    profile_row_key,
+)
 from auto_email.sheets import append_rows, build_log_row
 from auto_email.models import Profile
 from auto_email.parser import parse_profiles
@@ -74,37 +79,9 @@ def _clear_preview_state() -> None:
             del st.session_state[key]
 
 
-def _profile_row_key(row: dict) -> str:
-    email = str(row.get("Email", "")).strip().lower()
-    if email:
-        return email
-    full_name = str(row.get("Full Name", "")).strip().lower()
-    company = str(row.get("Company", "")).strip().lower()
-    first_name = str(row.get("First Name", "")).strip().lower()
-    return "|".join([full_name, first_name, company])
-
-
-def _preview_signature(cfg: dict, profiles: list[dict]) -> str:
-    render_inputs = {
-        "template": cfg.get("email_template", ""),
-        "subject": cfg.get("email_subject", ""),
-        "availability": cfg.get("availability", ""),
-        "sender_name": cfg.get("sender_name", ""),
-        "sender_intro": cfg.get("sender_intro", ""),
-        "profiles": [
-            {
-                "first_name": str(row.get("First Name", "")),
-                "full_name": str(row.get("Full Name", "")),
-                "email": str(row.get("Email", "")).strip().lower(),
-                "company": str(row.get("Company", "")),
-                "job_title": str(row.get("Job Title", "")),
-                "mit_details": str(row.get("MIT Details", "")),
-                "personalized_sentence": str(row.get("Personalized Sentence", "")),
-            }
-            for row in profiles
-        ],
-    }
-    return json.dumps(render_inputs, sort_keys=True)
+def _seed_preview_state(cfg: dict, profiles: list[dict]) -> None:
+    for key, value in preview_state_values(cfg, profiles).items():
+        st.session_state[key] = value
 
 st.title("Auto Email Sender")
 
@@ -325,9 +302,10 @@ if st.session_state["profiles"]:
     st.session_state["profiles"] = st.data_editor(
         st.session_state["profiles"], num_rows="dynamic", use_container_width=True
     )
-    current_preview_sig = _preview_signature(cfg, st.session_state["profiles"])
+    current_preview_sig = preview_signature(cfg, st.session_state["profiles"])
     if st.session_state.get("preview_sig") != current_preview_sig:
         _clear_preview_state()
+        _seed_preview_state(cfg, st.session_state["profiles"])
         st.session_state["preview_sig"] = current_preview_sig
     if st.session_state.get("parse_error_raw"):
         st.text_area(
@@ -408,40 +386,32 @@ if st.session_state["profiles"]:
                 row["Personalized Sentence"] = sentence
                 updated.append(row)
             st.session_state["profiles"] = updated
+            _clear_preview_state()
+            _seed_preview_state(cfg, st.session_state["profiles"])
+            st.session_state["preview_sig"] = preview_signature(cfg, st.session_state["profiles"])
             st.success("Personalized sentences applied.")
 
 st.subheader("5. Preview Emails")
 if st.session_state["profiles"]:
     if st.button("Refresh Previews"):
         _clear_preview_state()
-        st.session_state["preview_sig"] = _preview_signature(cfg, st.session_state["profiles"])
+        _seed_preview_state(cfg, st.session_state["profiles"])
+        st.session_state["preview_sig"] = preview_signature(cfg, st.session_state["profiles"])
     if not cfg.get("email_template"):
         st.info("Add an email template in Settings to preview emails.")
     else:
-        for row in st.session_state["profiles"]:
-            profile = Profile(
-                first_name=row.get("First Name", ""),
-                full_name=row.get("Full Name", ""),
-                email=row.get("Email", ""),
-                company=row.get("Company", ""),
-                job_title=row.get("Job Title", ""),
-                mit_details=row.get("MIT Details", ""),
-                personalized_sentence=row.get("Personalized Sentence", ""),
-            )
-            body = render_email(cfg["email_template"], profile, cfg)
-            subject_template = cfg.get("email_subject") or "MIT Consulting Group x {company}"
-            subject = subject_template.format(company=profile.company)
-            label = f"{profile.full_name or profile.email}"
-            row_key = _profile_row_key(row)
+        for entry in build_preview_entries(cfg, st.session_state["profiles"]):
+            label = entry["label"]
+            row_key = entry["row_key"]
             with st.expander(label):
                 st.text_input(
                     "Email Subject",
-                    value=subject,
+                    value=entry["subject"],
                     key=f"email_subject_{row_key}",
                 )
                 st.text_area(
                     "Email Body",
-                    value=body,
+                    value=entry["body"],
                     height=250,
                     key=f"email_body_{row_key}",
                 )
@@ -566,9 +536,10 @@ if st.session_state["profiles"]:
     if send_clicked:
         with st.spinner("Sending..." if mode == "send" else "Creating drafts..."):
             _refresh_profiles_from_raw()
-            current_preview_sig = _preview_signature(cfg, st.session_state["profiles"])
+            current_preview_sig = preview_signature(cfg, st.session_state["profiles"])
             if st.session_state.get("preview_sig") != current_preview_sig:
                 _clear_preview_state()
+                _seed_preview_state(cfg, st.session_state["profiles"])
                 st.session_state["preview_sig"] = current_preview_sig
                 st.warning("Previews changed after upstream updates. Review them again before sending.")
                 st.rerun()
@@ -576,7 +547,7 @@ if st.session_state["profiles"]:
             email_to_profile = {}
             for row in st.session_state["profiles"]:
                 to_addr = row.get("Email", "")
-                row_key = _profile_row_key(row)
+                row_key = profile_row_key(row)
                 body = st.session_state.get(f"email_body_{row_key}", "")
                 if to_addr and body:
                     profile = Profile(
